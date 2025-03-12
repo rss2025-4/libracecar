@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "libracecar"
+version = "0.0.1"
+
+[tool.poetry.dependencies]
+python = ">=3.10, <3.11"
+
+ipython = "^8"
+jax = "^0.5.1"
+equinox = "^0.11.12"
+jaxtyping = "^0.2.38"
+typeguard = "^4.4.2"
+beartype = "^0.20.0"
+colorama = "^0.4.6"
+optax = "^0.2.4"
+termcolor = "^2.5.0"
+
+[tool.poetry.group.gpu]
+optional = true
+[tool.poetry.group.gpu.dependencies]
+jax = { version = "^0.5.1", extras = ["cuda12"] }
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
+
+[tool.pyright]
+exclude = ["**/result*", ".cache"]
+typeCheckingMode = "standard"
