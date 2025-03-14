@@ -22,6 +22,7 @@ services:
       - ../../racecar_ws_src:/home/dockeruser/racecar_ws/src
       - /nix:/nix
       - ${HOME}/.emacs.d:/home/dockeruser/.emacs.d
+      - ${HOME}/.ssh:/home/dockeruser/.ssh
       - ${HOME}:${HOME}
       - ${HOME}/.cache/nix:/home/dockeruser/.cache/nix
       - /tmp/.X11-unix:/tmp/.X11-unix

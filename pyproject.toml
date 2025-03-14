@@ -14,6 +14,12 @@ beartype = "^0.20.0"
 colorama = "^0.4.6"
 optax = "^0.2.4"
 termcolor = "^2.5.0"
+unshare = "^0.22"
+pyroute2 = "^0.8.1"
+pytest = "^8.3.5"
+pyyaml = "^6.0.2"
+lark = "^1.2.2"
+transforms3d = "^0.4.2"
 
 [tool.poetry.group.gpu]
 optional = true

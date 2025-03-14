@@ -1,3 +1,4 @@
+from threading import Thread
 from typing import Annotated, Any, Callable, Generic, ParamSpec, TypeVar, final
 
 import equinox as eqx
@@ -181,3 +182,18 @@ def safe_select(
         on_true=handle_side(True, on_true),
         on_false=handle_side(False, on_false),
     )
+
+
+class PropagatingThread(Thread):
+    def run(self):
+        self.exc = None
+        try:
+            self.ret = self._target(*self._args, **self._kwargs)  # type: ignore
+        except BaseException as e:
+            self.exc = e
+
+    def join(self, timeout=None):
+        super(PropagatingThread, self).join(timeout)
+        if self.exc:
+            raise self.exc
+        return self.ret
