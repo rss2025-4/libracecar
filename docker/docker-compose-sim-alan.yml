@@ -18,17 +18,19 @@ services:
       # otherwise qt cant find icons by default so rqt_graph doesnt work
       - XDG_CURRENT_DESKTOP=GNOME
       - LOCALE_ARCHIVE=${LOCALE_ARCHIVE}
+      - SSH_AUTH_SOCK=$SSH_AUTH_SOCK
     volumes:
       - ../../racecar_ws_src:/home/dockeruser/racecar_ws/src
       - /nix:/nix
       - ${HOME}/.emacs.d:/home/dockeruser/.emacs.d
-      - ${HOME}/.ssh:/home/dockeruser/.ssh
+      # - ${HOME}/.ssh:/home/dockeruser/.ssh
       - ${HOME}:${HOME}
       - ${HOME}/.cache/nix:/home/dockeruser/.cache/nix
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /var/run/docker.sock:/var/run/docker.sock
       - ../.cache/pypoetry_docker:/home/dockeruser/.cache/pypoetry
       - ../.cache/pip_docker:/home/dockeruser/.cache/pip
+      - $SSH_AUTH_SOCK:$SSH_AUTH_SOCK
 
     deploy:
       resources:
