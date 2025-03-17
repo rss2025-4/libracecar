@@ -1,0 +1,45 @@
+services:
+  racecar:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+      args:
+        BASE_IMAGE: staffmitrss/racecar-real:latest
+        DOCKER_UID: 1000
+        DOCKER_GID: 1000
+    image: local/racecar
+    privileged: true
+    network_mode: "host"
+    entrypoint: /home/racecar/repos/libracecar/docker/entrypoint.sh
+    ports:
+      - 6081:6081
+    environment:
+      - DISPLAY=${DISPLAY}
+      - LD_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu/tegra:$LD_LIBRARY_PATH
+      - SSH_AUTH_SOCK=$SSH_AUTH_SOCK
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /tmp/argus_socket:/tmp/argus_socket
+      - /dev:/dev
+      - $HOME/racecar_ws:/home/dockeruser/racecar_ws
+      - /usr/local/zed/settings:/usr/local/zed/settings
+      - /usr/local/zed/resources:/usr/local/zed/resources
+      - ${HOME}:${HOME}
+      - ${HOME}/repos:/home/dockeruser/repos
+      - /nix:/nix
+      - ${HOME}/.emacs.d:/home/dockeruser/.emacs.d
+      - ${HOME}/.ssh:/home/dockeruser/.ssh
+      - ${HOME}/.cache/nix:/home/dockeruser/.cache/nix
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../.cache/pypoetry_docker:/home/dockeruser/.cache/pypoetry
+      - ../.cache/pip_docker:/home/dockeruser/.cache/pip
+      - $SSH_AUTH_SOCK:$SSH_AUTH_SOCK
+
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
