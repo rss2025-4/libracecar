@@ -40,25 +40,33 @@ class plot_style(eqx.Module):
         return plot_style((clamp_f(r), clamp_f(g), clamp_f(b)), clamp_f(a))
 
 
-class _plot_point(eqx.Module):
+class plot_point(eqx.Module):
     x: fval
     y: fval
 
     style: plot_style
 
     def clip(self):
-        return _plot_point(self.x, self.y, self.style.clip())
+        return plot_point(self.x, self.y, self.style.clip())
+
+    def plot(
+        self: batched["plot_point", ...],
+    ):
+        def inner(ctx: plot_ctx) -> plot_ctx:
+            return ctx.push_batched(self)
+
+        return inner
 
 
 class plot_ctx(eqx.Module):
     idx: ival
     limit: int = eqx.field(static=True)
-    points: batched[_plot_point, 0]
+    points: batched[plot_point, 0]
 
     @staticmethod
     def create(limit: int) -> "plot_ctx":
         points_buf = jax.vmap(
-            lambda: _plot_point(jnp.array(0.0), jnp.array(0.0), plot_style()),
+            lambda: plot_point(jnp.array(0.0), jnp.array(0.0), plot_style()),
             axis_size=limit,
         )()
         return plot_ctx(
@@ -72,7 +80,7 @@ class plot_ctx(eqx.Module):
         self, loc: tuple[flike, flike] | fpair, style: plot_style = plot_style()
     ) -> "plot_ctx":
         x, y = loc
-        ans = _plot_point(
+        ans = plot_point(
             x=jnp.array(x),
             y=jnp.array(y),
             style=style,
@@ -80,9 +88,9 @@ class plot_ctx(eqx.Module):
         return self.push_batched(ans)
 
     @jit
-    def push_batched(self, p: batched[_plot_point, ...]) -> "plot_ctx":
+    def push_batched(self, p: batched[plot_point, ...]) -> "plot_ctx":
         p = flatten_n_tree(p, len(p.x.shape))
-        p = jax.vmap(_plot_point.clip)(p)
+        p = jax.vmap(plot_point.clip)(p)
         lp = len(p.x)
 
         def update_one(x: Array, y: Array):

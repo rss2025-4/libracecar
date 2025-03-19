@@ -1,14 +1,16 @@
 import multiprocessing
+import os
 import subprocess
 import time
 from dataclasses import dataclass
+from multiprocessing.context import SpawnProcess
+from multiprocessing.process import BaseProcess
 from threading import Thread
 from typing import Any, Callable, Concatenate, ParamSpec, Protocol, TypeVar
 
 import rclpy
 from rclpy.node import Node
 
-from .sandbox import run_isolated
 from .utils import PropagatingThread, cast, cast_unchecked
 
 P = ParamSpec("P")
@@ -31,7 +33,7 @@ class _proc:
 
 @dataclass
 class _call:
-    p: multiprocessing.Process
+    p: BaseProcess
 
     def poll(self):
         if self.p.exitcode is not None and self.p.exitcode != 0:
@@ -64,7 +66,11 @@ class proc_manager:
     @property
     def popen(self):
         def inner(*args, **kwargs):
-            x = subprocess.Popen(*args, **kwargs)
+            # note:
+            # you might get this here:
+            # /usr/lib/python3.10/subprocess.py:1796: RuntimeWarning: os.fork() was called. os.fork() is incompatible with multithreaded code, and JAX is multithreaded, so this will likely lead to a deadlock.
+            # which is harmless since the subprocess immediately exec to something else
+            x = subprocess.Popen(*args, **kwargs, preexec_fn=os.setsid)
             self._parts.append(_proc(x))
             return x
 
@@ -72,8 +78,9 @@ class proc_manager:
 
     def call(
         self, f: Callable[P, None], *args: P.args, **kwargs: P.kwargs
-    ) -> multiprocessing.Process:
-        p = multiprocessing.Process(target=f, args=args, kwargs=kwargs)
+    ) -> SpawnProcess:
+        ctx = multiprocessing.get_context("spawn")
+        p = ctx.Process(target=f, args=args, kwargs=kwargs)
         p.start()
         self._parts.append(_call(p))
         return p

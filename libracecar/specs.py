@@ -14,7 +14,7 @@ from jax import numpy as jnp
 from jax import tree_util as jtu
 from jaxtyping import jaxtyped
 
-from .plot import _plot_point, plot_ctx, plot_style
+from .plot import plot_ctx, plot_point, plot_style
 from .utils import (
     batched,
     check_shape,
@@ -37,6 +37,10 @@ min_turn_radius = 1.0
 class position(eqx.Module):
     coord: fpair
     heading: fval
+
+    @staticmethod
+    def zero():
+        return position(jnp.array([0.0, 0.0]), jnp.array(0.0))
 
     def plot(self, style: plot_style = plot_style()):
         def inner(ctx: plot_ctx) -> plot_ctx:

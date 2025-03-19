@@ -9,8 +9,9 @@ import time
 import traceback
 from dataclasses import dataclass
 from multiprocessing import Queue
+from multiprocessing.process import BaseProcess
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Generic, ParamSpec, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Generic, ParamSpec, Protocol, TypeVar
 
 import pytest
 import unshare
@@ -18,7 +19,7 @@ from pyroute2 import IPDB, IPRoute, NetNS
 from pyroute2.ipdb.interfaces import Interface
 
 P = ParamSpec("P")
-R = TypeVar("R")
+R = TypeVar("R", covariant=True)
 
 # https://stackoverflow.com/questions/1667257/how-do-i-mount-a-filesystem-using-python
 libc = ctypes.CDLL(ctypes.util.find_library("c"), use_errno=True)
@@ -73,41 +74,46 @@ class _subproc_ret_ok:
 
 @dataclass
 class _subproc_err:
-    _tp: type[Exception]
+    _tp: type[BaseException]
     _str: str
 
 
-def _sub_subproc_fn(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwargs):
+def _run_user_fn(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwargs):
+    # runs f, and push exception string or return value into a queue
     try:
+        __tracebackhide__ = True
         ans = f(*args, **kwargs)
         q.put_nowait(_subproc_ret_ok(ans))
-    except Exception as e:
+    except BaseException as e:
         traceback.print_exc()
-        q.put(_subproc_err(type(e), str(e)))
-
-    # otherwise queue might not flush and item not visible to parent process
-    q.close()
-    q.join_thread()
-    os._exit(0)
+        q.put_nowait(_subproc_err(type(e), str(e)))
 
 
-def _subproc_fn(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwargs):
+def _namespace_root(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwargs):
     setup_isolation()
-    p = multiprocessing.Process(
-        target=_sub_subproc_fn, args=(f, q, *args), kwargs=kwargs
-    )
-    p.start()
-    p.join()
-    sys.exit(p.exitcode)
+    ctx = multiprocessing.get_context("fork")
+    p = ctx.Process(target=_run_user_fn, args=(f, q, *args), kwargs=kwargs)
+    try:
+        p.start()
+        p.join()
+    except BaseException as e:
+        if p.exitcode is not None and p.exitcode != 0:
+            sys.exit(p.exitcode)
+        traceback.print_exc()
+        q.put_nowait(_subproc_err(type(e), str(e)))
+        sys.exit(0)
 
 
 def run_isolated(f: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
-    q = Queue()
-    p = multiprocessing.Process(target=_subproc_fn, args=(f, q, *args), kwargs=kwargs)
+    # communicating with _namespace_root via Queue can only work via a fork
+    # if we used spawn than Queue is over network which we will disconnect
+    ctx = multiprocessing.get_context("fork")
+    q = ctx.Queue()
+    p = ctx.Process(target=_namespace_root, args=(f, q, *args), kwargs=kwargs)
     p.start()
     p.join()
     if p.exitcode != 0:
-        raise RuntimeError("subprocess failed")
+        raise RuntimeError(f"{f} under isolate failed")
     res = q.get_nowait()
     if isinstance(res, _subproc_ret_ok):
         return res.val
@@ -121,10 +127,11 @@ def run_isolated(f: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
     error_t.__qualname__ = res._tp.__qualname__
 
     __tracebackhide__ = True
-    raise error_t(res._str)
+    raise error_t(f"(from {f} under isolate):\n" + res._str)
 
 
 def isolate(f: Callable[P, R]) -> Callable[P, R]:
+    # f is required to be pickleable
     @functools.wraps(f)
     def inner(*args: P.args, **kwargs: P.kwargs) -> R:
         __tracebackhide__ = True

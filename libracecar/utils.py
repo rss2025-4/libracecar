@@ -1,21 +1,41 @@
+import dataclasses
+import multiprocessing
+import os
+import traceback
 from threading import Thread
-from typing import Annotated, Any, Callable, Generic, ParamSpec, TypeVar, final
+from typing import (
+    Annotated,
+    Any,
+    Callable,
+    Concatenate,
+    Generic,
+    Optional,
+    ParamSpec,
+    Sequence,
+    TypeVar,
+    final,
+)
 
 import equinox as eqx
 import jax
 import jax._src.pretty_printer as pp
 import numpy as np
+import numpyro
 from jax import lax
 from jax import numpy as jnp
 from jax import tree_util as jtu
 from jax.core import Tracer, eval_jaxpr
 from jax.experimental import io_callback
 from jaxtyping import Array, ArrayLike, Bool, Float, Int
+from numpyro.distributions import constraints
 
 F = TypeVar("F", bound=Callable)
 T = TypeVar("T")
-R = TypeVar("R")
+R = TypeVar("R", covariant=True)
 P = ParamSpec("P")
+R2 = TypeVar("R2", covariant=True)
+P2 = ParamSpec("P2")
+JitP = ParamSpec("JitP")
 
 
 fval = Float[Array, ""]
@@ -24,7 +44,7 @@ bval = Bool[Array, ""]
 
 fpair = Float[Array, "2"]
 
-flike = fval | float
+flike = Float[ArrayLike, ""]
 
 # type annoation for a batched pytree
 batched = Annotated
@@ -54,9 +74,41 @@ class cast_unchecked(Generic[T]):
         return a
 
 
+cast_unchecked_ = cast_unchecked()
+
+
 # jit = eqx.filter_jit
-def jit(f: F) -> F:
-    return cast_unchecked()(jax.jit(f))
+class _jit_wrapped(Generic[P, R]):
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R: ...
+    def __get__(
+        self: "_jit_wrapped[Concatenate[T, P2], R2]", obj: T, *_, **__
+    ) -> Callable[P2, R2]: ...
+    def trace(self, *args: P.args, **kwargs: P.kwargs) -> jax.stages.Traced: ...
+    def lower(self, *args: P.args, **kwargs: P.kwargs) -> jax.stages.Lowered: ...
+
+
+class _jit_fn(Generic[JitP]):
+    def __call__(
+        self, f: Callable[P, R], /, *args: JitP.args, **kwargs: JitP.kwargs
+    ) -> _jit_wrapped[P, R]: ...
+
+
+def _wrap_jit(
+    jit_fn: Callable[Concatenate[Callable, P], Any],
+) -> _jit_fn[P]:
+    return jit_fn  # type: ignore
+
+
+jit = _wrap_jit(jax.jit)
+
+
+@jit
+def testfn(a: int):
+    pass
+
+
+def aaa():
+    z = testfn.__get__(1)
 
 
 def io_callback_(fn: Callable[P, R], result_shape_dtypes: R = None):
@@ -90,9 +142,11 @@ def debug_print(*args, **kwargs):
 
 
 def pretty_print(x: Any) -> pp.Doc:
+    if isinstance(x, pp.Doc):
+        return x
     if isinstance(x, Tracer):
         return x._pretty_print()
-    return pp_join(*str(x).splitlines())
+    return pp_join(*repr(x).splitlines())
 
 
 def _pp_doc(x: pp.Doc | str) -> pp.Doc:
@@ -107,6 +161,53 @@ def pp_join(*docs: pp.Doc | str, sep: pp.Doc | str = pp.brk()) -> pp.Doc:
 
 def pp_nested(*docs: pp.Doc | str) -> pp.Doc:
     return pp.group(pp.nest(2, pp_join(*docs)))
+
+
+# modified from equinox
+_comma_sep = pp.concat([pp.text(","), pp.brk()])
+
+
+def bracketed(
+    name: Optional[pp.Doc],
+    indent: int,
+    objs: Sequence[pp.Doc],
+    lbracket: str,
+    rbracket: str,
+) -> pp.Doc:
+    nested = pp.concat(
+        [
+            pp.nest(indent, pp.concat([pp.brk(""), pp.join(_comma_sep, objs)])),
+            pp.brk(""),
+        ]
+    )
+    concated = []
+    if name is not None:
+        concated.append(name)
+    concated.extend([pp.text(lbracket), nested, pp.text(rbracket)])
+    return pp.group(pp.concat(concated))
+
+
+def named_objs(pairs):
+    return [
+        pp.concat([pp.text(key + "="), pretty_print(value)]) for key, value in pairs
+    ]
+
+
+def pformat_dataclass(obj) -> pp.Doc:
+    objs = named_objs(
+        [
+            (field.name, getattr(obj, field.name, pp.text("<uninitialised>")))
+            for field in dataclasses.fields(obj)
+            if field.repr
+        ]
+    )
+    return bracketed(
+        name=pp.text(obj.__class__.__name__),
+        indent=2,
+        objs=objs,
+        lbracket="(",
+        rbracket=")",
+    )
 
 
 def pp_obj(name: pp.Doc | str, *fields: pp.Doc | str):
@@ -197,3 +298,13 @@ class PropagatingThread(Thread):
         if self.exc:
             raise self.exc
         return self.ret
+
+
+def numpyro_param(
+    name: str,
+    init_value: ArrayLike,
+    constraint: constraints.Constraint = constraints.real,
+) -> Array:
+    ans = numpyro.param(name, init_value, constraint=constraint)
+    assert ans is not None
+    return jnp.array(ans)
