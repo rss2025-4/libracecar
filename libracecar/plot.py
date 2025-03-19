@@ -1,5 +1,15 @@
 import math
-from typing import Callable, Protocol, TypeVar
+from dataclasses import dataclass
+from typing import (
+    Any,
+    Callable,
+    Concatenate,
+    Generic,
+    ParamSpec,
+    Protocol,
+    TypeVar,
+    overload,
+)
 
 import equinox as eqx
 import jax
@@ -14,11 +24,14 @@ from std_msgs.msg import ColorRGBA, Float32
 from termcolor import colored
 from visualization_msgs.msg import Marker
 
+from libracecar.batched import batched, batched_treemap
+
 from .utils import (
-    batched,
+    cast,
+    cast_unchecked,
+    cast_unchecked_,
     debug_callback,
     debug_print,
-    flatten_n_tree,
     flike,
     fpair,
     fval,
@@ -27,6 +40,10 @@ from .utils import (
     pp_obj,
     pretty_print,
 )
+
+T = TypeVar("T")
+R = TypeVar("R", covariant=True)
+P = ParamSpec("P")
 
 
 class plot_style(eqx.Module):
@@ -40,67 +57,73 @@ class plot_style(eqx.Module):
         return plot_style((clamp_f(r), clamp_f(g), clamp_f(b)), clamp_f(a))
 
 
-class _plot_point(eqx.Module):
+class plot_point(eqx.Module):
     x: fval
     y: fval
 
     style: plot_style
 
+    @staticmethod
+    def create(
+        loc: tuple[flike, flike] | fpair, style: plot_style = plot_style()
+    ) -> batched["plot_point"]:
+        x, y = loc
+        return batched.create(
+            plot_point(
+                x=jnp.array(x),
+                y=jnp.array(y),
+                style=style,
+            )
+        )
+
     def clip(self):
-        return _plot_point(self.x, self.y, self.style.clip())
+
+        return plot_point(self.x, self.y, self.style.clip())
+
+    def __call__(self, ctx: "plot_ctx"):
+        return ctx.point_batched(batched.create(self))
 
 
 class plot_ctx(eqx.Module):
     idx: ival
     limit: int = eqx.field(static=True)
-    points: batched[_plot_point, 0]
+    points: batched[plot_point]
 
     @staticmethod
     def create(limit: int) -> "plot_ctx":
-        points_buf = jax.vmap(
-            lambda: _plot_point(jnp.array(0.0), jnp.array(0.0), plot_style()),
-            axis_size=limit,
-        )()
+        points_buf = batched.create(
+            plot_point(jnp.array(0.0), jnp.array(0.0), plot_style())
+        ).repeat(limit)
         return plot_ctx(
             idx=jnp.array(0),
             limit=limit,
             points=points_buf,
         )
 
-    @jit
-    def point(
-        self, loc: tuple[flike, flike] | fpair, style: plot_style = plot_style()
-    ) -> "plot_ctx":
-        x, y = loc
-        ans = _plot_point(
-            x=jnp.array(x),
-            y=jnp.array(y),
-            style=style,
-        )
-        return self.push_batched(ans)
-
-    @jit
-    def push_batched(self, p: batched[_plot_point, ...]) -> "plot_ctx":
-        p = flatten_n_tree(p, len(p.x.shape))
-        p = jax.vmap(_plot_point.clip)(p)
-        lp = len(p.x)
+    def point_batched(self, p: batched[plot_point]) -> "plot_ctx":
+        p = p.reshape(-1)
 
         def update_one(x: Array, y: Array):
-            assert len(x) == self.limit
-            assert len(y) == lp
-            assert x.shape[1:] == y.shape[1:]
-            return lax.dynamic_update_slice(
-                x, y, (self.idx, *(0 for _ in (x.shape[1:])))
-            )
+            return lax.dynamic_update_slice(x, y, (self.idx,))
 
         return plot_ctx(
-            idx=self.idx + lp,
+            idx=self.idx + len(p),
             limit=self.limit,
-            points=jtu.tree_map(update_one, self.points, p),
+            points=batched_treemap(update_one, self.points, p),
         )
 
-    def __add__(self, f: Callable[["plot_ctx"], "plot_ctx"]) -> "plot_ctx":
-        return f(self)
+    def __add__(self, f: "plotable") -> "plot_ctx":
+        assert isinstance(f, batched)
+        f = f
+        while isinstance((uf := f.unflatten()), batched):
+            f = uf
+
+        f_ = cast_unchecked[batched[Callable[[plot_ctx], plot_ctx]]]()(f)
+
+        if isinstance(uf, plot_point):
+            return self.point_batched(cast_unchecked_(f))
+        ctx = f_.thread(self)
+        return ctx
 
     def _do_warn(self):
         debug_callback(
@@ -128,11 +151,12 @@ class plot_ctx(eqx.Module):
             assert isinstance(ans, list)
             return ans  # type: ignore
 
-        X = to_python(self.points.x)
-        Y = to_python(self.points.y)
+        _points = self.points.unflatten()
+        X = to_python(_points.x)
+        Y = to_python(_points.y)
 
-        R, G, B = map(to_python, self.points.style.color)
-        A = to_python(self.points.style.alpha)
+        R, G, B = map(to_python, _points.style.color)
+        A = to_python(_points.style.alpha)
 
         assert isinstance(m.points, list)
         assert isinstance(m.colors, list)
@@ -148,3 +172,42 @@ class plot_ctx(eqx.Module):
 
             m.points.append(p)
             m.colors.append(c)
+
+
+plotable = batched[Callable[[plot_ctx], plot_ctx]] | batched["plotable"]
+
+
+class plotmethod_(eqx.Module):
+    f: Callable = eqx.field(static=True)
+    self_: Any
+    args: Any
+    kwargs: Any
+
+    def __call__(self, ctx: plot_ctx):
+        return self.f(self.self_, ctx, *self.args, **self.kwargs)
+
+
+@dataclass
+class plotmethod(Generic[T, P]):
+
+    f: Callable[Concatenate[T, plot_ctx, P], plot_ctx]
+
+    @overload
+    def __get__(
+        self, instance: None, owner: type | None = None, /
+    ) -> "plotmethod[T, P]": ...
+
+    @overload
+    def __get__(
+        self, instance: T, owner: type | None = None, /
+    ) -> Callable[P, Callable[[plot_ctx], plot_ctx]]: ...
+
+    def __get__(self, instance: T | None, owner: type | None = None) -> Any:
+        if instance is None:
+            return self
+        else:
+
+            def inner(*args: P.args, **kwargs: P.kwargs):
+                return plotmethod_(self.f, instance, args, kwargs)
+
+            return inner

@@ -20,6 +20,7 @@ pytest = "^8.3.5"
 pyyaml = "^6.0.2"
 lark = "^1.2.2"
 transforms3d = "^0.4.2"
+numpyro = "^0.18.0"
 
 [tool.poetry.group.gpu]
 optional = true

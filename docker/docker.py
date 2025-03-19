@@ -11,7 +11,7 @@ os.chdir(Path(__file__).resolve().parent)
 compose_cmd = [
     "docker",
     "compose",
-    # *["-f", "docker-compose-sim-alan.yml"],
+    *["-f", "docker-compose-sim-alan.yml"],
 ]
 
 if len(sys.argv) > 1:
@@ -43,7 +43,7 @@ drvs = [
     "p#less-build.less-download-flakes.nixwrapper",
     # "p#less-build.less-download-flakes.pdf-tools-epdfinfo",
     "p#pythontools",
-    "p#poetry",
+    # "p#poetry",
 ]
 
 

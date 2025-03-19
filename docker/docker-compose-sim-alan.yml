@@ -32,10 +32,10 @@ services:
       - ../.cache/pip_docker:/home/dockeruser/.cache/pip
       - $SSH_AUTH_SOCK:$SSH_AUTH_SOCK
 
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
