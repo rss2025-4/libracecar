@@ -1,0 +1,15 @@
+services:
+  racecar:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+      args:
+        BASE_IMAGE: sebagarc/racecar2
+        DOCKER_UID: ${DOCKER_UID:-1000}
+        DOCKER_GID: ${DOCKER_GID:-1000}
+    image: local/racecar-sim
+    entrypoint: /home/dockeruser/racecar_ws/src/libracecar/docs/build.sh
+    volumes:
+      - ..:/home/dockeruser/racecar_ws/src/libracecar
+      - ../.cache/pypoetry_docker:/home/dockeruser/.cache/pypoetry
+      - ../.cache/pip_docker:/home/dockeruser/.cache/pip

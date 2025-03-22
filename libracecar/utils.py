@@ -101,15 +101,6 @@ def _wrap_jit(
 jit = _wrap_jit(jax.jit)
 
 
-@jit
-def testfn(a: int):
-    pass
-
-
-def aaa():
-    z = testfn.__get__(1)
-
-
 def io_callback_(fn: Callable[P, R], result_shape_dtypes: R = None):
     def inner(*args: P.args, **kwargs: P.kwargs) -> R:
         return io_callback(

@@ -43,6 +43,7 @@ drvs = [
     "p#less-build.less-download-flakes.nixwrapper",
     # "p#less-build.less-download-flakes.pdf-tools-epdfinfo",
     "p#pythontools",
+    "p#js",
     # "p#poetry",
 ]
 

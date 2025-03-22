@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import math
 from typing import (
     Annotated,
@@ -47,6 +48,7 @@ def _remove_suffix(v: tuple[int, ...], suffix: tuple[int, ...]) -> tuple[int, ..
 
 
 def _batched_treemap_of(fn: Callable[Concatenate[tuple[Array, ...], P], Array]):
+    @functools.wraps(fn)
     def inner(
         batches: Sequence[batched[T]], *args: P.args, **kwargs: P.kwargs
     ) -> batched[T]:
@@ -58,6 +60,7 @@ def _batched_treemap_of(fn: Callable[Concatenate[tuple[Array, ...], P], Array]):
 def _batched_treemap_of_one(
     fn: Callable[Concatenate[Array, P], Array],
 ):
+    @functools.wraps(fn)
     def inner(arg: batched[T], *args: P.args, **kwargs: P.kwargs) -> batched[T]:
         return batched_treemap(lambda buf: fn(buf, *args, **kwargs), arg)
 
@@ -153,7 +156,7 @@ class batched(eqx.Module, Generic[T_co]):
         return batched_vmap(f, self)
 
     def tuple_map(
-        self: "batched[tuple[*T1_tup]]", f: Callable[[*T1_tup], T2]
+        self: batched[tuple["*T1_tup"]], f: Callable[[*T1_tup], T2]
     ) -> batched[T2]:
         return batched_vmap(lambda x: f(*x), self)
 

@@ -18,7 +18,6 @@ optax = "^0.2.4"
 pyroute2 = "^0.8.1"
 pytest = "^8.3.5"
 pyyaml = "^6.0.2"
-sphinx = "^8"
 termcolor = "^2.5.0"
 transforms3d = "^0.4.2"
 typeguard = "^4.4.2"
@@ -28,6 +27,12 @@ unshare = "^0.22"
 optional = true
 [tool.poetry.group.gpu.dependencies]
 jax = { version = "^0.5.1", extras = ["cuda12"] }
+
+[tool.poetry.group.docs]
+optional = true
+[tool.poetry.group.docs.dependencies]
+sphinx = "^8"
+sphinx-autodoc-typehints = "^3"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
