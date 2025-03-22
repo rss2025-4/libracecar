@@ -45,6 +45,19 @@ class position(eqx.Module):
     def translation(coord: Float[ArrayLike, "2"]):
         return position(jnp.array(coord), jnp.array(0.0))
 
+    @staticmethod
+    def create(
+        coord: tuple[flike, flike] | Float[ArrayLike, "2"], heading: flike | None = None
+    ):
+        coord = jnp.array(coord)
+        if heading is None:
+            heading = jnp.array(0.0)
+        else:
+            heading = jnp.array(heading)
+        assert coord.shape == (2,)
+        assert heading.shape == ()
+        return position(coord, heading)
+
     def __add__(self, p: "position"):
         rotated_p = lax.complex(p.coord[0], p.coord[1]) * lax.complex(
             jnp.cos(self.heading), jnp.sin(self.heading)

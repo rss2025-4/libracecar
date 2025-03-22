@@ -24,8 +24,7 @@ from std_msgs.msg import ColorRGBA, Float32
 from termcolor import colored
 from visualization_msgs.msg import Marker
 
-from libracecar.batched import batched, batched_treemap
-
+from .batched import batched, batched_treemap
 from .utils import (
     cast,
     cast_unchecked,

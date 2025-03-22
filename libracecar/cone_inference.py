@@ -9,9 +9,8 @@ from jax import lax, random
 from jaxtyping import Array, Float
 from numpyro.distributions import constraints
 
-from libracecar.plot import plot_ctx, plot_point, plot_style, plotable
-
 from .batched import batched
+from .plot import plot_ctx, plot_point, plot_style, plotable
 from .utils import (
     cast_unchecked_,
     debug_print,
