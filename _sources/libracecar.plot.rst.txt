@@ -1,0 +1,7 @@
+libracecar.plot module
+======================
+
+.. automodule:: libracecar.plot
+   :members:
+   :undoc-members:
+   :show-inheritance:

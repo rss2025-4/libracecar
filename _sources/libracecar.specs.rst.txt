@@ -1,0 +1,7 @@
+libracecar.specs module
+=======================
+
+.. automodule:: libracecar.specs
+   :members:
+   :undoc-members:
+   :show-inheritance:

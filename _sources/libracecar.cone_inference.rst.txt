@@ -1,0 +1,7 @@
+libracecar.cone\_inference module
+=================================
+
+.. automodule:: libracecar.cone_inference
+   :members:
+   :undoc-members:
+   :show-inheritance:

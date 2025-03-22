@@ -1,0 +1,25 @@
+libracecar package
+==================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   libracecar.batched
+   libracecar.cone_inference
+   libracecar.plot
+   libracecar.sandbox
+   libracecar.specs
+   libracecar.test_utils
+   libracecar.transforms
+   libracecar.utils
+
+Module contents
+---------------
+
+.. automodule:: libracecar
+   :members:
+   :undoc-members:
+   :show-inheritance:

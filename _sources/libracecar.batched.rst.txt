@@ -1,0 +1,7 @@
+libracecar.batched module
+=========================
+
+.. automodule:: libracecar.batched
+   :members:
+   :undoc-members:
+   :show-inheritance:
