@@ -29,6 +29,7 @@ drvs = [
     "p#pdf-tools-epdfinfo",
     "p#prettier",
     "p#pythontools",
+    "n#fd",
 ]
 
 res = (

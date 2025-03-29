@@ -5,13 +5,14 @@ import time
 from dataclasses import dataclass
 from multiprocessing.context import SpawnProcess
 from multiprocessing.process import BaseProcess
+from pathlib import Path
 from threading import Thread
-from typing import Any, Callable, Concatenate, ParamSpec, Protocol, TypeVar
+from typing import Callable, ParamSpec, Protocol, TypeVar
 
 import rclpy
 from rclpy.node import Node
 
-from .utils import PropagatingThread, cast, cast_unchecked
+from .utils import PropagatingThread, cast_unchecked
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -91,12 +92,32 @@ class proc_manager:
         self._parts.append(_thread(t))
         return t
 
-    def ros_launch(self, package_name: str, launch_file_name: str):
+    def ros_launch(self, package_name: str, launch_file_name: str, *cmd_args: str):
         # WARNING: this currently silently fails if a node in the lanuch file fails
-        return self.popen(["ros2", "launch", str(package_name), str(launch_file_name)])
+        return self.popen(
+            ["ros2", "launch", str(package_name), str(launch_file_name), *cmd_args]
+        )
 
-    def ros_run(self, package_name: str, executable_name: str):
-        return self.popen(["ros2", "run", str(package_name), str(executable_name)])
+    def ros_run(
+        self,
+        package_name: str,
+        executable_name: str,
+        *,
+        ros_params: dict[str, str] | None = None,
+        params_file: Path | str | None = None,
+    ):
+        cmd = ["ros2", "run", str(package_name), str(executable_name), "--ros-args"]
+
+        if ros_params is not None:
+            for x, y in ros_params.items():
+                cmd.append("-p")
+                cmd.append(f"{x}:={y}")
+
+        if params_file is not None:
+            cmd.append("--params-file")
+            cmd.append(str(params_file))
+
+        return self.popen(cmd)
 
     def ros_node_subproc(
         self, node_t: Callable[P, Node], *args: P.args, **kwargs: P.kwargs

@@ -11,13 +11,19 @@ RUN bash /install_docker.sh
 # apt packages
 RUN apt-get update \
     && apt-get install -y \
+    bear \
+    clang-format \
+    clangd \
     direnv \
     python3.10-venv \
+    sudo \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
 RUN deluser racecar || true
+RUN deluser ubuntu || true
 RUN groupdel zed || true
+
 # Create a user
 ARG DOCKER_UID=1000
 ARG DOCKER_GID=1000
@@ -57,6 +63,7 @@ COPY ./docker/default.rviz /default.rviz
 ENTRYPOINT []
 
 USER dockeruser
+
 RUN mkdir -p /home/dockeruser/racecar_ws/src
 RUN	echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
 RUN	echo 'export TERM=xterm-256color' >> ~/.bashrc

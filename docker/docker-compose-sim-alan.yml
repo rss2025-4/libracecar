@@ -5,6 +5,7 @@ services:
       dockerfile: ./docker/Dockerfile
       args:
         BASE_IMAGE: sebagarc/racecar2
+        # BASE_IMAGE: nvidia/cuda:12.8.1-devel-ubuntu24.04
         DOCKER_UID: 1000
         DOCKER_GID: 1000
     image: local/racecar-sim
@@ -32,10 +33,17 @@ services:
       - ../.cache/pip_docker:/home/dockeruser/.cache/pip
       - $SSH_AUTH_SOCK:$SSH_AUTH_SOCK
 
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      # - ${HOME}/.nix-profile:/home/dockeruser/.nix-profile:ro
+      - ${HOME}/.local/share/fonts:/home/dockeruser/.local/share/fonts:ro
+      - ${HOME}/.fontconfig:/home/dockeruser/.fontconfig:ro
+      - ${HOME}/.config/fontconfig:/home/dockeruser/.config/fontconfig:ro
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

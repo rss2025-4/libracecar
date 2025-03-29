@@ -3,16 +3,13 @@ from __future__ import annotations
 import functools
 import math
 from typing import (
-    Annotated,
     Any,
     Callable,
     Concatenate,
     Generic,
-    Optional,
     ParamSpec,
     Sequence,
     TypeVar,
-    final,
     overload,
 )
 
@@ -20,12 +17,24 @@ import equinox as eqx
 import jax
 from jax import Array, ShapeDtypeStruct, lax
 from jax import numpy as jnp
+from jax import random
 from jax import tree_util as jtu
+from jax._src import traceback_util
 from jax.util import safe_zip as zip
 from jaxtyping import ArrayLike
 from typing_extensions import TypeVarTuple
 
-from .utils import blike, ival, pp_obj, pretty_print, shape_of, tree_at_
+from .utils import (
+    blike,
+    cast_fsig,
+    cast_unchecked,
+    ival,
+    pp_obj,
+    pretty_print,
+    shape_of,
+)
+
+traceback_util.register_exclusion(__file__)
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -71,11 +80,14 @@ class batched(eqx.Module, Generic[T_co]):
     _bufs: list[Array]
     _shapes: list[ShapeDtypeStruct] = eqx.field(static=True)
     _pytree: jtu.PyTreeDef = eqx.field(static=True)
+    _tracking: Array | None = None
 
     @staticmethod
     def create(val: T2, batch_dims: tuple[int, ...] = ()) -> batched[T2]:
         bufs, tree = jtu.tree_flatten(val)
-        assert len(bufs) > 0
+        if len(bufs) == 0:
+            return batched([], [], tree, jnp.zeros(batch_dims))
+
         _bufs: list[Array] = []
         _shapes: list[ShapeDtypeStruct] = []
 
@@ -89,6 +101,8 @@ class batched(eqx.Module, Generic[T_co]):
         return batched(_bufs, _shapes, tree)
 
     def batch_dims(self) -> tuple[int, ...]:
+        if self._tracking is not None:
+            return self._tracking.shape
         ans = [
             _remove_suffix(b.shape, s.shape) for b, s in zip(self._bufs, self._shapes)
         ]
@@ -113,11 +127,21 @@ class batched(eqx.Module, Generic[T_co]):
         except:
             return pp_obj("malformed_batched", pretty_print(self.unflatten())).format()
 
+    @staticmethod
+    @cast_fsig(jnp.arange)
+    def arange(*args, **kwargs) -> batched[Array]:
+        ans = jnp.arange(*args, **kwargs)
+        (n,) = ans.shape
+        return batched.create(ans, (n,))
+
     def repeat(self, n: int) -> batched[T_co]:
         return jax.vmap(lambda: self, axis_size=n)()
 
     def reshape(self, *new_shape: int) -> batched[T_co]:
         bd = self.batch_dims()
+
+        if new_shape == (-1,) and len(bd) == 1:
+            return self
 
         return jtu.tree_map(
             lambda x: x.reshape(*new_shape, *x.shape[len(bd) :]),
@@ -129,9 +153,7 @@ class batched(eqx.Module, Generic[T_co]):
     roll = _batched_treemap_of_one(jnp.roll)
 
     def __getitem__(self, idx: Any) -> batched[T_co]:
-        ans = jtu.tree_map(lambda x: x[idx], self)
-        _ = ans.batch_dims()
-        return ans
+        return batched_treemap(lambda x: x[idx], self)
 
     def dynamic_slice(
         self, start_indices: Sequence[ArrayLike], slice_sizes: Sequence[int]
@@ -152,13 +174,45 @@ class batched(eqx.Module, Generic[T_co]):
     def __len__(self) -> int:
         return self.batch_dims()[0]
 
-    def map(self, f: Callable[[T_co], T2]) -> batched[T2]:
-        return batched_vmap(f, self)
+    def map(self, f: Callable[[T_co], T2], /, *, sequential=False) -> batched[T2]:
+        return batched_vmap(f, self, sequential=sequential)
+
+    def map_with_rng(
+        self, rng_key: ArrayLike, f: Callable[[T_co, Array], T2], /, *, sequential=False
+    ) -> batched[T2]:
+        bds = self.batch_dims()
+        keys = batched.create(random.split(rng_key, bds), bds)
+        return batched_vmap(f, self, keys, sequential=sequential)
 
     def tuple_map(
         self: batched[tuple["*T1_tup"]], f: Callable[[*T1_tup], T2]
     ) -> batched[T2]:
         return batched_vmap(lambda x: f(*x), self)
+
+    @overload
+    def split_tuple(
+        self: batched[tuple[T1, T2]],
+    ) -> tuple[batched[T1], batched[T2]]: ...
+
+    @overload
+    def split_tuple(
+        self: batched[tuple[T1, T2, T3]],
+    ) -> tuple[batched[T1], batched[T2], batched[T3]]: ...
+
+    def split_tuple(self: batched[tuple]) -> tuple[batched, ...]:
+        bds = self.batch_dims()
+        me = self.unflatten()
+        assert isinstance(me, tuple)
+        return tuple(batched.create(x, bds) for x in me)
+
+    def static_map(self, f: Callable[[T_co], T2], /) -> T2:
+        if self.batch_dims() == ():
+            return f(self.unwrap())
+
+        def inner(x: batched[T_co]):
+            return x.static_map(f)
+
+        return jax.vmap(inner, out_axes=None)(self)
 
     def filter(self, f: Callable[[T_co], blike]) -> tuple[batched[T_co], ival]:
         return self.filter_arr(self.map(f))
@@ -196,20 +250,52 @@ class batched(eqx.Module, Generic[T_co]):
         ans, _ = lax.scan(inner, init=init, xs=self)
         return ans
 
+    def all_idxs(self) -> batched[tuple[ival, ...]]:
+        bds = self.batch_dims()
+        if len(bds) == 0:
+            return batched.create(())
+        n = bds[0]
+
+        def inner(i: batched[ival], v: batched[T_co]) -> batched[tuple[ival, ...]]:
+            return v.all_idxs().map(lambda rest: (i.unwrap(), *rest))
+
+        return jax.vmap(inner)(batched.arange(n), self)
+
+    def enumerate(
+        self,
+        f: (
+            Callable[[T_co], R]
+            | Callable[[T_co, ival], R]
+            | Callable[[T_co, ival, ival], R]
+            | Callable[[T_co, ival, ival, ival], R]
+        ),
+    ) -> batched[R]:
+        f_ = cast_unchecked["Callable[[T_co, *tuple[ival, ...]], R]"]()(f)
+        idxs = self.all_idxs()
+        return batched_zip(self, idxs).tuple_map(lambda v, idx: f_(v, *idx))
+
 
 @overload
-def batched_vmap(f: Callable[[T1], R], a1: batched[T1], /) -> batched[R]: ...
-@overload
 def batched_vmap(
-    f: Callable[[T1, T2], R], a1: batched[T1], a2: batched[T2], /
+    f: Callable[[T1], R], a1: batched[T1], /, *, sequential=False
 ) -> batched[R]: ...
 @overload
 def batched_vmap(
-    f: Callable[[T1, T2, T3], R], a1: batched[T1], a2: batched[T2], a3: batched[T3], /
+    f: Callable[[T1, T2], R], a1: batched[T1], a2: batched[T2], /, *, sequential=False
+) -> batched[R]: ...
+@overload
+def batched_vmap(
+    f: Callable[[T1, T2, T3], R],
+    a1: batched[T1],
+    a2: batched[T2],
+    a3: batched[T3],
+    /,
+    *,
+    sequential=False,
 ) -> batched[R]: ...
 
 
-def batched_vmap(f: Callable[..., R], *args: batched) -> batched[R]:
+def batched_vmap(f: Callable[..., R], *args: batched, sequential=False) -> batched[R]:
     bds = [x.batch_dims() for x in args]
     for bd in bds:
         assert bd == bds[0]
@@ -217,9 +303,13 @@ def batched_vmap(f: Callable[..., R], *args: batched) -> batched[R]:
         return batched.create(f(*(x.unwrap() for x in args)))
 
     def inner(*args: batched) -> batched[R]:
-        return batched_vmap(f, *args)
+        return batched_vmap(f, *args, sequential=sequential)
 
-    return jax.vmap(inner)(*args)
+    if not sequential:
+        return jax.vmap(inner)(*args)
+    else:
+        _, ans = lax.scan(lambda _, args: (None, inner(*args)), init=None, xs=args)
+        return ans
 
 
 def batched_zip(a1: batched[T1], a2: batched[T2], /) -> batched[tuple[T1, T2]]:

@@ -107,18 +107,14 @@ import inspect
 import multiprocessing
 import os
 import sys
-import time
 import traceback
 from dataclasses import dataclass
 from multiprocessing import Queue
-from multiprocessing.process import BaseProcess
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Generic, ParamSpec, Protocol, TypeVar
+from typing import Any, Callable, ParamSpec, TypeVar
 
-import pytest
 import unshare
-from pyroute2 import IPDB, IPRoute, NetNS
-from pyroute2.ipdb.interfaces import Interface
+from pyroute2 import IPRoute
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -182,6 +178,10 @@ class _subproc_err:
 
 def _run_user_fn(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwargs):
     # runs f, and push exception string or return value into a queue
+
+    # nvidia gpus wants to have the "right" /proc
+    mount("proc", "/proc", "proc", "")
+
     try:
         __tracebackhide__ = True
         ans = f(*args, **kwargs)
@@ -229,7 +229,10 @@ def run_isolated(f: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
     error_t.__qualname__ = res._tp.__qualname__
 
     __tracebackhide__ = True
-    raise error_t(f"(from {f} under isolate):\n" + res._str)
+    raise error_t(
+        f"(from {f} under isolate):\n"
+        + "\n".join("> " + x for x in res._str.splitlines())
+    )
 
 
 def isolate(f: Callable[P, R]) -> Callable[P, R]:

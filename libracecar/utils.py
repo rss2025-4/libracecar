@@ -1,33 +1,30 @@
 import dataclasses
-import multiprocessing
-import os
-import traceback
+from functools import partial
 from threading import Thread
 from typing import (
-    Annotated,
     Any,
     Callable,
     Concatenate,
     Generic,
     Optional,
     ParamSpec,
+    Protocol,
     Sequence,
     TypeVar,
     final,
+    overload,
 )
 
 import equinox as eqx
 import jax
 import jax._src.pretty_printer as pp
 import numpy as np
-import numpyro
 from jax import lax
 from jax import numpy as jnp
 from jax import tree_util as jtu
 from jax.core import Tracer, eval_jaxpr
 from jax.experimental import io_callback
-from jaxtyping import Array, ArrayLike, Bool, Float, Int
-from numpyro.distributions import constraints
+from jaxtyping import Array, ArrayLike, Bool, Complex64, Float, Int, Int32
 
 F = TypeVar("F", bound=Callable)
 T = TypeVar("T")
@@ -42,11 +39,13 @@ JitP = ParamSpec("JitP")
 fval = Float[Array, ""]
 ival = Int[Array, ""]
 bval = Bool[Array, ""]
+cval = Complex64[Array, ""]
 
 fpair = Float[Array, "2"]
 
 flike = Float[ArrayLike, ""]
 blike = Bool[ArrayLike, ""]
+ilike = Bool[Int32, ""]
 
 
 @final
@@ -76,17 +75,35 @@ class cast_unchecked(Generic[T]):
 cast_unchecked_ = cast_unchecked()
 
 
+def cast_fsig(f1: Callable[P, Any]):
+    def inner(f2: Callable[..., R]) -> Callable[P, R]:
+        return f2
+
+    return inner
+
+
 # jit = eqx.filter_jit
-class _jit_wrapped(Generic[P, R]):
+class _jit_wrapped(Protocol[P, R]):
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R: ...
+    @overload
     def __get__(
-        self: "_jit_wrapped[Concatenate[T, P2], R2]", obj: T, *_, **__
+        self: "_jit_wrapped[Concatenate[T, P2], R2]",
+        obj: T,
+        objtype: type | None = None,
+        /,
     ) -> Callable[P2, R2]: ...
+    @overload
+    def __get__(
+        self: "_jit_wrapped[Concatenate[T, P2], R2]",
+        obj: None,
+        objtype: type | None = None,
+        /,
+    ) -> "_jit_wrapped[Concatenate[T, P2], R2]": ...
     def trace(self, *args: P.args, **kwargs: P.kwargs) -> jax.stages.Traced: ...
     def lower(self, *args: P.args, **kwargs: P.kwargs) -> jax.stages.Lowered: ...
 
 
-class _jit_fn(Generic[JitP]):
+class _jit_fn(Protocol[JitP]):
     def __call__(
         self, f: Callable[P, R], /, *args: JitP.args, **kwargs: JitP.kwargs
     ) -> _jit_wrapped[P, R]: ...
@@ -95,7 +112,7 @@ class _jit_fn(Generic[JitP]):
 def _wrap_jit(
     jit_fn: Callable[Concatenate[Callable, P], Any],
 ) -> _jit_fn[P]:
-    return jit_fn  # type: ignore
+    return jit_fn
 
 
 jit = _wrap_jit(jax.jit)
@@ -262,6 +279,22 @@ def safe_select(
     )
 
 
+def tree_select(
+    pred: ArrayLike,
+    on_true: T,
+    on_false: T,
+) -> T:
+    pred_ = jnp.array(pred)
+    bufs_true, tree1 = jtu.tree_flatten(on_true)
+    bufs_false, tree2 = jtu.tree_flatten(on_false)
+    assert tree1 == tree2
+    out_bufs = [
+        x if x is y else lax.select(pred_, on_true=x, on_false=y)
+        for x, y in zip(bufs_true, bufs_false)
+    ]
+    return jtu.tree_unflatten(tree1, out_bufs)
+
+
 class PropagatingThread(Thread):
     def run(self):
         self.exc = None
@@ -275,16 +308,6 @@ class PropagatingThread(Thread):
         if self.exc:
             raise self.exc
         return self.ret
-
-
-def numpyro_param(
-    name: str,
-    init_value: ArrayLike,
-    constraint: constraints.Constraint = constraints.real,
-) -> Array:
-    ans = numpyro.param(name, init_value, constraint=constraint)
-    assert ans is not None
-    return jnp.array(ans)
 
 
 def shape_of(x: ArrayLike) -> tuple[int, ...]:
@@ -304,3 +327,27 @@ def tree_at_(
         kwargs["replace_fn"] = replace_fn
 
     return eqx.tree_at(where=where, pytree=pytree, **kwargs)
+
+
+def cond_(pre: blike, true_fun: Callable[[], T], false_fun: Callable[[], T]) -> T:
+    return lax.cond(pre, true_fun=true_fun, false_fun=false_fun)
+
+
+def round_clip(x: flike, min: ilike, max: ilike):
+    return jnp.clip(jnp.round(x).astype(np.int32), min=min, max=max - 1)
+
+
+def _ensure_not_weak_typed(x: ArrayLike):
+    if isinstance(x, Array) and not x.weak_type:
+        return x
+    if not isinstance(x, Array):
+        x = jnp.array(x)
+    return jnp.array(x, dtype=x.dtype)
+
+
+def ensure_not_weak_typed(x: T) -> T:
+    bufs, treedef = jtu.tree_flatten(x)
+    return jtu.tree_unflatten(
+        treedef,
+        [_ensure_not_weak_typed(b) for b in bufs],
+    )

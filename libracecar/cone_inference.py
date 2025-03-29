@@ -1,27 +1,22 @@
 import equinox as eqx
 import jax
 import jax.numpy as jnp
-import numpy as np
 import numpyro
 import numpyro.distributions as dist
 import optax
-from jax import lax, random
+from jax import random
 from jaxtyping import Array, Float
 from numpyro.distributions import constraints
 
 from .batched import batched
-from .plot import plot_ctx, plot_point, plot_style, plotable
+from .numpyro_utils import numpyro_param
+from .plot import plot_point, plot_style, plotable
 from .utils import (
     cast_unchecked_,
-    debug_print,
-    flike,
     fpair,
     fval,
     jit,
-    numpyro_param,
     pformat_dataclass,
-    pp_obj,
-    pretty_print,
 )
 
 
