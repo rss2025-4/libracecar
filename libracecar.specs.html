@@ -37,147 +37,26 @@
 <span id="libracecar-specs-module"></span><h1>libracecar.specs module<a class="headerlink" href="#module-libracecar.specs" title="Link to this heading">¶</a></h1>
 <p>properties of the car, and functions to compute car states after actions</p>
 <dl class="py class">
-<dt class="sig sig-object py" id="libracecar.specs.path">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">libracecar.specs.</span></span><span class="sig-name descname"><span class="pre">path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#path"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.path" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>parts</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[<a class="reference internal" href="#libracecar.specs.path_segment" title="libracecar.specs.path_segment"><code class="xref py py-class docutils literal notranslate"><span class="pre">path_segment</span></code></a>]</span>)</p>
-</dd>
-</dl>
-<dl class="py method">
-<dt class="sig sig-object py" id="libracecar.specs.path.clip">
-<span class="sig-name descname"><span class="pre">clip</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#path.clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.path.clip" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#libracecar.specs.path" title="libracecar.specs.path"><code class="xref py py-class docutils literal notranslate"><span class="pre">path</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="libracecar.specs.path.from_parts">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_parts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">segs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#path.from_parts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.path.from_parts" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>segs</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#libracecar.specs.path_segment" title="libracecar.specs.path_segment"><code class="xref py py-class docutils literal notranslate"><span class="pre">path_segment</span></code></a></span>)</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#libracecar.specs.path" title="libracecar.specs.path"><code class="xref py py-class docutils literal notranslate"><span class="pre">path</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="libracecar.specs.path.move">
-<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#path.move"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.path.move" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>p</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#libracecar.specs.position" title="libracecar.specs.position"><code class="xref py py-class docutils literal notranslate"><span class="pre">position</span></code></a> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>)</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<a class="reference internal" href="#libracecar.specs.position" title="libracecar.specs.position"><code class="xref py py-class docutils literal notranslate"><span class="pre">position</span></code></a>, <a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[<a class="reference internal" href="#libracecar.specs.position" title="libracecar.specs.position"><code class="xref py py-class docutils literal notranslate"><span class="pre">position</span></code></a>]]</span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="libracecar.specs.path.parts">
-<span class="sig-name descname"><span class="pre">parts</span></span><a class="headerlink" href="#libracecar.specs.path.parts" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="libracecar.specs.path.plot">
-<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">plot_style()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#path.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.path.plot" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>start</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#libracecar.specs.position" title="libracecar.specs.position"><code class="xref py py-class docutils literal notranslate"><span class="pre">position</span></code></a> | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>)</p></li>
-<li><p><strong>style</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="libracecar.plot.html#libracecar.plot.plot_style" title="libracecar.plot.plot_style"><code class="xref py py-class docutils literal notranslate"><span class="pre">plot_style</span></code></a></span>)</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="libracecar.plot.html#libracecar.plot.plot_ctx" title="libracecar.plot.plot_ctx"><code class="xref py py-class docutils literal notranslate"><span class="pre">plot_ctx</span></code></a>], <a class="reference internal" href="libracecar.plot.html#libracecar.plot.plot_ctx" title="libracecar.plot.plot_ctx"><code class="xref py py-class docutils literal notranslate"><span class="pre">plot_ctx</span></code></a>]] | <a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[<a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="libracecar.plot.html#libracecar.plot.plot_ctx" title="libracecar.plot.plot_ctx"><code class="xref py py-class docutils literal notranslate"><span class="pre">plot_ctx</span></code></a>], <a class="reference internal" href="libracecar.plot.html#libracecar.plot.plot_ctx" title="libracecar.plot.plot_ctx"><code class="xref py py-class docutils literal notranslate"><span class="pre">plot_ctx</span></code></a>]] | <a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[plotable]]</span></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="libracecar.specs.path_segment">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">libracecar.specs.</span></span><span class="sig-name descname"><span class="pre">path_segment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angle</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#path_segment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.path_segment" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>angle</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float[Array,</span> <span class="pre">'']</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">Float[ndarray,</span> <span class="pre">'']</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">number</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>)</p></li>
-<li><p><strong>length</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float[Array,</span> <span class="pre">'']</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">Float[ndarray,</span> <span class="pre">'']</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">number</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>)</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="libracecar.specs.path_segment.angle">
-<span class="sig-name descname"><span class="pre">angle</span></span><a class="headerlink" href="#libracecar.specs.path_segment.angle" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="libracecar.specs.path_segment.clip">
-<span class="sig-name descname"><span class="pre">clip</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#path_segment.clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.path_segment.clip" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#libracecar.specs.path_segment" title="libracecar.specs.path_segment"><code class="xref py py-class docutils literal notranslate"><span class="pre">path_segment</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="libracecar.specs.path_segment.length">
-<span class="sig-name descname"><span class="pre">length</span></span><a class="headerlink" href="#libracecar.specs.path_segment.length" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="libracecar.specs.path_segment.move">
-<span class="sig-name descname"><span class="pre">move</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">old</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#path_segment.move"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.path_segment.move" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>old</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#libracecar.specs.position" title="libracecar.specs.position"><code class="xref py py-class docutils literal notranslate"><span class="pre">position</span></code></a></span>)</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#libracecar.specs.position" title="libracecar.specs.position"><code class="xref py py-class docutils literal notranslate"><span class="pre">position</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="libracecar.specs.path_segment.plot">
-<span class="sig-name descname"><span class="pre">plot</span></span><a class="headerlink" href="#libracecar.specs.path_segment.plot" title="Link to this definition">¶</a></dt>
-<dd><p>Callable[Concatenate[~T, libracecar.plot.plot_ctx, ~P], libracecar.plot.plot_ctx])</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="libracecar.plot.html#libracecar.plot.plotmethod" title="libracecar.plot.plotmethod">plotmethod</a>(f</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="libracecar.specs.position">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">libracecar.specs.</span></span><span class="sig-name descname"><span class="pre">position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coord</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">heading</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#position"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.position" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">libracecar.specs.</span></span><span class="sig-name descname"><span class="pre">position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tran</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rot</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#position"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.position" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>coord</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float[Array,</span> <span class="pre">'2']</span></code></span>)</p></li>
-<li><p><strong>heading</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float[Array,</span> <span class="pre">'']</span></code></span>)</p></li>
+<li><p><strong>tran</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="libracecar.vector.html#libracecar.vector.vec" title="libracecar.vector.vec"><code class="xref py py-class docutils literal notranslate"><span class="pre">vec</span></code></a></span>)</p></li>
+<li><p><strong>rot</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="libracecar.vector.html#libracecar.vector.unitvec" title="libracecar.vector.unitvec"><code class="xref py py-class docutils literal notranslate"><span class="pre">unitvec</span></code></a></span>)</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="libracecar.specs.position.coord">
-<span class="sig-name descname"><span class="pre">coord</span></span><a class="headerlink" href="#libracecar.specs.position.coord" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="libracecar.specs.position.as_arr">
+<span class="sig-name descname"><span class="pre">as_arr</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#position.as_arr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.position.as_arr" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Float[Array,</span> <span class="pre">'3']</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="libracecar.specs.position.create">
@@ -192,19 +71,14 @@
 </dl>
 </dd></dl>
 
-<dl class="py attribute">
-<dt class="sig sig-object py" id="libracecar.specs.position.heading">
-<span class="sig-name descname"><span class="pre">heading</span></span><a class="headerlink" href="#libracecar.specs.position.heading" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="libracecar.specs.position.invert_pose">
 <span class="sig-name descname"><span class="pre">invert_pose</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#position.invert_pose"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.position.invert_pose" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="libracecar.specs.position.plot">
-<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">plot_style()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#position.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.position.plot" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="libracecar.specs.position.plot_as_point">
+<span class="sig-name descname"><span class="pre">plot_as_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">style=plot_style(color=(f32[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f32[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f32[])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha=f32[])</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#position.plot_as_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.position.plot_as_point" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>style</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="libracecar.plot.html#libracecar.plot.plot_style" title="libracecar.plot.plot_style"><code class="xref py py-class docutils literal notranslate"><span class="pre">plot_style</span></code></a></span>)</p>
@@ -216,6 +90,29 @@
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="libracecar.specs.position.plot_as_seg">
+<span class="sig-name descname"><span class="pre">plot_as_seg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">style=plot_style(color=(f32[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f32[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f32[])</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha=f32[])</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#position.plot_as_seg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.position.plot_as_seg" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>style</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="libracecar.plot.html#libracecar.plot.plot_style" title="libracecar.plot.plot_style"><code class="xref py py-class docutils literal notranslate"><span class="pre">plot_style</span></code></a></span>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="libracecar.plot.html#libracecar.plot.plot_ctx" title="libracecar.plot.plot_ctx"><code class="xref py py-class docutils literal notranslate"><span class="pre">plot_ctx</span></code></a>], <a class="reference internal" href="libracecar.plot.html#libracecar.plot.plot_ctx" title="libracecar.plot.plot_ctx"><code class="xref py py-class docutils literal notranslate"><span class="pre">plot_ctx</span></code></a>]] | <a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[<a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<a class="reference internal" href="libracecar.plot.html#libracecar.plot.plot_ctx" title="libracecar.plot.plot_ctx"><code class="xref py py-class docutils literal notranslate"><span class="pre">plot_ctx</span></code></a>], <a class="reference internal" href="libracecar.plot.html#libracecar.plot.plot_ctx" title="libracecar.plot.plot_ctx"><code class="xref py py-class docutils literal notranslate"><span class="pre">plot_ctx</span></code></a>]] | <a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[plotable]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="libracecar.specs.position.rot">
+<span class="sig-name descname"><span class="pre">rot</span></span><a class="headerlink" href="#libracecar.specs.position.rot" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="libracecar.specs.position.tran">
+<span class="sig-name descname"><span class="pre">tran</span></span><a class="headerlink" href="#libracecar.specs.position.tran" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="libracecar.specs.position.translation">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">translation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coord</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/specs.html#position.translation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.specs.position.translation" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -224,6 +121,16 @@
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="libracecar.specs.position.x">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">x</span></span><a class="headerlink" href="#libracecar.specs.position.x" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="libracecar.specs.position.y">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">y</span></span><a class="headerlink" href="#libracecar.specs.position.y" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="libracecar.specs.position.zero">

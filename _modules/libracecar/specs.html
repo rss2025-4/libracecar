@@ -36,30 +36,21 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">beartype</span><span class="w"> </span><span class="kn">import</span> <span class="n">beartype</span> <span class="k">as</span> <span class="n">typechecker</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">lax</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">tree_util</span> <span class="k">as</span> <span class="n">jtu</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">jaxtyped</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Float</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.batched</span><span class="w"> </span><span class="kn">import</span> <span class="n">batched</span><span class="p">,</span> <span class="n">batched_vmap</span><span class="p">,</span> <span class="n">batched_zip</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.plot</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_ctx</span><span class="p">,</span> <span class="n">plot_point</span><span class="p">,</span> <span class="n">plot_style</span><span class="p">,</span> <span class="n">plotable</span><span class="p">,</span> <span class="n">plotmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">libracecar.vector</span><span class="w"> </span><span class="kn">import</span> <span class="n">unitvec</span><span class="p">,</span> <span class="n">vec</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.batched</span><span class="w"> </span><span class="kn">import</span> <span class="n">batched</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.plot</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_point</span><span class="p">,</span> <span class="n">plot_style</span><span class="p">,</span> <span class="n">plotable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">flike</span><span class="p">,</span>
-    <span class="n">fpair</span><span class="p">,</span>
-    <span class="n">fval</span><span class="p">,</span>
-    <span class="n">io_callback_</span><span class="p">,</span>
-    <span class="n">ival</span><span class="p">,</span>
-    <span class="n">pformat_dataclass</span><span class="p">,</span>
-    <span class="n">pformat_repr</span><span class="p">,</span>
     <span class="n">pp_obj</span><span class="p">,</span>
     <span class="n">pretty_print</span><span class="p">,</span>
-    <span class="n">safe_select</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">turn_angle_limit</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">8</span>
@@ -69,21 +60,35 @@
 <div class="viewcode-block" id="position">
 <a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.position">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">position</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="n">coord</span><span class="p">:</span> <span class="n">fpair</span>
-    <span class="n">heading</span><span class="p">:</span> <span class="n">fval</span>
+    <span class="n">tran</span><span class="p">:</span> <span class="n">vec</span>
+    <span class="n">rot</span><span class="p">:</span> <span class="n">unitvec</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">x</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tran</span><span class="o">.</span><span class="n">x</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">y</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tran</span><span class="o">.</span><span class="n">y</span>
+
+<div class="viewcode-block" id="position.as_arr">
+<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.position.as_arr">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">as_arr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rot</span><span class="o">.</span><span class="n">to_angle</span><span class="p">()])</span></div>
+
 
 <div class="viewcode-block" id="position.zero">
 <a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.position.zero">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">zero</span><span class="p">():</span>
-        <span class="k">return</span> <span class="n">position</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mf">0.0</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">position</span><span class="p">(</span><span class="n">vec</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">unitvec</span><span class="o">.</span><span class="n">zero</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="position.translation">
 <a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.position.translation">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">translation</span><span class="p">(</span><span class="n">coord</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">]):</span>
-        <span class="k">return</span> <span class="n">position</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coord</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mf">0.0</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">position</span><span class="p">(</span><span class="n">vec</span><span class="o">.</span><span class="n">from_arr</span><span class="p">(</span><span class="n">coord</span><span class="p">),</span> <span class="n">unitvec</span><span class="o">.</span><span class="n">zero</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="position.create">
@@ -94,179 +99,158 @@
     <span class="p">):</span>
         <span class="n">coord</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">heading</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">heading</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+            <span class="n">rot</span> <span class="o">=</span> <span class="n">unitvec</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">heading</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">heading</span><span class="p">)</span>
+            <span class="n">rot</span> <span class="o">=</span> <span class="n">unitvec</span><span class="o">.</span><span class="n">from_angle</span><span class="p">(</span><span class="n">heading</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">coord</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,)</span>
-        <span class="k">assert</span> <span class="n">heading</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">()</span>
-        <span class="k">return</span> <span class="n">position</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">heading</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">position</span><span class="p">(</span><span class="n">vec</span><span class="o">.</span><span class="n">from_arr</span><span class="p">(</span><span class="n">coord</span><span class="p">),</span> <span class="n">rot</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="s2">&quot;position&quot;</span><span class="p">):</span>
-        <span class="n">rotated_p</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">complex</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">coord</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="o">.</span><span class="n">coord</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">lax</span><span class="o">.</span><span class="n">complex</span><span class="p">(</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">heading</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">heading</span><span class="p">)</span>
-        <span class="p">)</span>
         <span class="k">return</span> <span class="n">position</span><span class="p">(</span>
-            <span class="n">coord</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">coord</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">rotated_p</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">rotated_p</span><span class="o">.</span><span class="n">imag</span><span class="p">]),</span>
-            <span class="n">heading</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">heading</span> <span class="o">+</span> <span class="n">p</span><span class="o">.</span><span class="n">heading</span><span class="p">,</span>
+            <span class="n">tran</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tran</span> <span class="o">+</span> <span class="n">p</span><span class="o">.</span><span class="n">tran</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rot</span><span class="p">,</span>
+            <span class="n">rot</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rot</span><span class="o">.</span><span class="n">mul_unit</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">rot</span><span class="p">),</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="position.invert_pose">
 <a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.position.invert_pose">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">invert_pose</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">rotated_coord</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">complex</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">coord</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">coord</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">lax</span><span class="o">.</span><span class="n">complex</span><span class="p">(</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">heading</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">heading</span><span class="p">)</span>
-        <span class="p">)</span>
         <span class="k">return</span> <span class="n">position</span><span class="p">(</span>
-            <span class="n">coord</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">rotated_coord</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">rotated_coord</span><span class="o">.</span><span class="n">imag</span><span class="p">]),</span>
-            <span class="n">heading</span><span class="o">=-</span><span class="bp">self</span><span class="o">.</span><span class="n">heading</span><span class="p">,</span>
+            <span class="n">tran</span><span class="o">=-</span><span class="bp">self</span><span class="o">.</span><span class="n">tran</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rot</span><span class="p">,</span>
+            <span class="n">rot</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rot</span><span class="o">.</span><span class="n">invert</span><span class="p">(),</span>
         <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="position.plot">
-<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.position.plot">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">plot_style</span> <span class="o">=</span> <span class="n">plot_style</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">plotable</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">plot_point</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coord</span><span class="p">,</span> <span class="n">style</span><span class="p">)</span></div>
+<div class="viewcode-block" id="position.plot_as_point">
+<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.position.plot_as_point">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_as_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">plot_style</span> <span class="o">=</span> <span class="n">plot_style</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">plotable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">plot_point</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tran</span><span class="o">.</span><span class="n">as_arr</span><span class="p">(),</span> <span class="n">style</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="position.plot_as_seg">
+<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.position.plot_as_seg">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">plot_as_seg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">plot_style</span> <span class="o">=</span> <span class="n">plot_style</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="n">plotable</span><span class="p">:</span>
+        <span class="n">p1</span> <span class="o">=</span> <span class="n">plot_point</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tran</span><span class="o">.</span><span class="n">as_arr</span><span class="p">(),</span> <span class="n">plot_style</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">color</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">style</span><span class="o">.</span><span class="n">alpha</span> <span class="o">/</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">p2</span> <span class="o">=</span> <span class="n">plot_point</span><span class="o">.</span><span class="n">create</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">tran</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">rot</span><span class="p">)</span><span class="o">.</span><span class="n">as_arr</span><span class="p">(),</span> <span class="n">style</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">batched</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">p1</span><span class="p">,</span> <span class="n">p2</span><span class="p">])</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_pretty_print</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">pp_obj</span><span class="p">(</span><span class="s2">&quot;position&quot;</span><span class="p">,</span> <span class="n">pretty_print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coord</span><span class="p">),</span> <span class="n">pretty_print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">heading</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">pp_obj</span><span class="p">(</span><span class="s2">&quot;position&quot;</span><span class="p">,</span> <span class="n">pretty_print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tran</span><span class="p">),</span> <span class="n">pretty_print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rot</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pretty_print</span><span class="p">()</span><span class="o">.</span><span class="n">format</span><span class="p">()</span></div>
 
 
 
-<div class="viewcode-block" id="path_segment">
-<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.path_segment">[docs]</a>
-<span class="nd">@jaxtyped</span><span class="p">(</span><span class="n">typechecker</span><span class="o">=</span><span class="n">typechecker</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">path_segment</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="n">angle</span><span class="p">:</span> <span class="n">fval</span>
-    <span class="n">length</span><span class="p">:</span> <span class="n">fval</span>
+<span class="c1"># @jaxtyped(typechecker=typechecker)</span>
+<span class="c1"># class path_segment(eqx.Module):</span>
+<span class="c1">#     angle: fval</span>
+<span class="c1">#     length: fval</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">angle</span><span class="p">:</span> <span class="n">flike</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="n">flike</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">angle</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">angle</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
+<span class="c1">#     def __init__(self, angle: flike, length: flike):</span>
+<span class="c1">#         self.angle = jnp.array(angle)</span>
+<span class="c1">#         self.length = jnp.array(length)</span>
 
-<div class="viewcode-block" id="path_segment.clip">
-<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.path_segment.clip">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">clip</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;path_segment&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">path_segment</span><span class="p">(</span>
-            <span class="n">angle</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">angle</span><span class="p">,</span> <span class="o">-</span><span class="n">turn_angle_limit</span><span class="p">,</span> <span class="n">turn_angle_limit</span><span class="p">),</span>
-            <span class="n">length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span>
-        <span class="p">)</span></div>
+<span class="c1">#     def clip(self) -&gt; &quot;path_segment&quot;:</span>
+<span class="c1">#         return path_segment(</span>
+<span class="c1">#             angle=jnp.clip(self.angle, -turn_angle_limit, turn_angle_limit),</span>
+<span class="c1">#             length=self.length,</span>
+<span class="c1">#         )</span>
 
+<span class="c1">#     @jaxtyped(typechecker=typechecker)</span>
+<span class="c1">#     def move(self, old: position) -&gt; position:</span>
+<span class="c1">#         # ang=pi/8 ==&gt; circle of radius 1</span>
+<span class="c1">#         # ang=pi/8 , dist=pi/2 ==&gt; turn=pi/2</span>
 
-<div class="viewcode-block" id="path_segment.move">
-<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.path_segment.move">[docs]</a>
-    <span class="nd">@jaxtyped</span><span class="p">(</span><span class="n">typechecker</span><span class="o">=</span><span class="n">typechecker</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">move</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="n">position</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">position</span><span class="p">:</span>
-        <span class="c1"># ang=pi/8 ==&gt; circle of radius 1</span>
-        <span class="c1"># ang=pi/8 , dist=pi/2 ==&gt; turn=pi/2</span>
+<span class="c1">#         turn = (self.angle / turn_angle_limit) * self.length / min_turn_radius</span>
 
-        <span class="n">turn</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">angle</span> <span class="o">/</span> <span class="n">turn_angle_limit</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="n">min_turn_radius</span>
+<span class="c1">#         h1 = old.heading</span>
+<span class="c1">#         h2 = old.heading + turn</span>
 
-        <span class="n">h1</span> <span class="o">=</span> <span class="n">old</span><span class="o">.</span><span class="n">heading</span>
-        <span class="n">h2</span> <span class="o">=</span> <span class="n">old</span><span class="o">.</span><span class="n">heading</span> <span class="o">+</span> <span class="n">turn</span>
+<span class="c1">#         zero_turn = jnp.abs(turn) &lt;= 1e-8</span>
 
-        <span class="n">zero_turn</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">turn</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">1e-8</span>
+<span class="c1">#         offsetx = safe_select(</span>
+<span class="c1">#             zero_turn,</span>
+<span class="c1">#             on_false=lambda: ((jnp.sin(h2) - jnp.sin(h1)) / turn * self.length),</span>
+<span class="c1">#             on_true=lambda: self.length,</span>
+<span class="c1">#         )</span>
 
-        <span class="n">offsetx</span> <span class="o">=</span> <span class="n">safe_select</span><span class="p">(</span>
-            <span class="n">zero_turn</span><span class="p">,</span>
-            <span class="n">on_false</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">((</span><span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">h2</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">h1</span><span class="p">))</span> <span class="o">/</span> <span class="n">turn</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">),</span>
-            <span class="n">on_true</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">,</span>
-        <span class="p">)</span>
+<span class="c1">#         offsety = safe_select(</span>
+<span class="c1">#             zero_turn,</span>
+<span class="c1">#             on_false=lambda: ((-jnp.cos(h2) + jnp.cos(h1)) / turn * self.length),</span>
+<span class="c1">#             on_true=lambda: 0.0,</span>
+<span class="c1">#         )</span>
 
-        <span class="n">offsety</span> <span class="o">=</span> <span class="n">safe_select</span><span class="p">(</span>
-            <span class="n">zero_turn</span><span class="p">,</span>
-            <span class="n">on_false</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">((</span><span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">h2</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">h1</span><span class="p">))</span> <span class="o">/</span> <span class="n">turn</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">),</span>
-            <span class="n">on_true</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
-        <span class="p">)</span>
+<span class="c1">#         new_pos = old.coord + jnp.array([offsetx, offsety])</span>
 
-        <span class="n">new_pos</span> <span class="o">=</span> <span class="n">old</span><span class="o">.</span><span class="n">coord</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">offsetx</span><span class="p">,</span> <span class="n">offsety</span><span class="p">])</span>
+<span class="c1">#         return position(</span>
+<span class="c1">#             coord=new_pos,</span>
+<span class="c1">#             heading=h2,</span>
+<span class="c1">#         )</span>
 
-        <span class="k">return</span> <span class="n">position</span><span class="p">(</span>
-            <span class="n">coord</span><span class="o">=</span><span class="n">new_pos</span><span class="p">,</span>
-            <span class="n">heading</span><span class="o">=</span><span class="n">h2</span><span class="p">,</span>
-        <span class="p">)</span></div>
+<span class="c1">#     __repr__ = pformat_repr</span>
 
+<span class="c1">#     @plotmethod</span>
+<span class="c1">#     def plot(self, ctx: plot_ctx, start: position, style: plot_style = plot_style()):</span>
+<span class="c1">#         def plot_one(d: fval, ctx: plot_ctx):</span>
+<span class="c1">#             mid = path_segment(</span>
+<span class="c1">#                 self.angle,</span>
+<span class="c1">#                 lax.select(self.length &gt; 0, d, -d),</span>
+<span class="c1">#             ).move(start)</span>
+<span class="c1">#             ctx += mid.plot(style)</span>
+<span class="c1">#             return d + 0.1, ctx</span>
 
-    <span class="fm">__repr__</span> <span class="o">=</span> <span class="n">pformat_repr</span>
-
-    <span class="nd">@plotmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">plot_ctx</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">position</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">plot_style</span> <span class="o">=</span> <span class="n">plot_style</span><span class="p">()):</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">plot_one</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="n">fval</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">plot_ctx</span><span class="p">):</span>
-            <span class="n">mid</span> <span class="o">=</span> <span class="n">path_segment</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">angle</span><span class="p">,</span>
-                <span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="o">-</span><span class="n">d</span><span class="p">),</span>
-            <span class="p">)</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
-            <span class="n">ctx</span> <span class="o">+=</span> <span class="n">mid</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">style</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">d</span> <span class="o">+</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">ctx</span>
-
-        <span class="n">_</span><span class="p">,</span> <span class="n">ctx</span> <span class="o">=</span> <span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
-            <span class="n">init_val</span><span class="o">=</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mf">0.0</span><span class="p">),</span> <span class="n">ctx</span><span class="p">),</span>
-            <span class="n">cond_fun</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">),</span>
-            <span class="n">body_fun</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">plot_one</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
-        <span class="p">)</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">ctx</span> <span class="o">=</span> <span class="n">plot_one</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">),</span> <span class="n">ctx</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">ctx</span></div>
-
+<span class="c1">#         _, ctx = lax.while_loop(</span>
+<span class="c1">#             init_val=(jnp.array(0.0), ctx),</span>
+<span class="c1">#             cond_fun=lambda p: p[0] &lt; jnp.abs(self.length),</span>
+<span class="c1">#             body_fun=lambda p: plot_one(p[0], p[1]),</span>
+<span class="c1">#         )</span>
+<span class="c1">#         _, ctx = plot_one(jnp.abs(self.length), ctx)</span>
+<span class="c1">#         return ctx</span>
 
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="path">
-<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.path">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">path</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="n">parts</span><span class="p">:</span> <span class="n">batched</span><span class="p">[</span><span class="n">path_segment</span><span class="p">]</span>
+<span class="c1"># class path(eqx.Module):</span>
+<span class="c1">#     parts: batched[path_segment]</span>
 
-<div class="viewcode-block" id="path.move">
-<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.path.move">[docs]</a>
-    <span class="nd">@jaxtyped</span><span class="p">(</span><span class="n">typechecker</span><span class="o">=</span><span class="n">typechecker</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">move</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">position</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">position</span><span class="p">,</span> <span class="n">batched</span><span class="p">[</span><span class="n">position</span><span class="p">]]:</span>
-        <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">p</span> <span class="o">=</span> <span class="n">position</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span>
+<span class="c1">#     @jaxtyped(typechecker=typechecker)</span>
+<span class="c1">#     def move(self, p: position | None = None) -&gt; tuple[position, batched[position]]:</span>
+<span class="c1">#         if p is None:</span>
+<span class="c1">#             p = position.zero()</span>
 
-        <span class="n">final_pos</span><span class="p">,</span> <span class="n">pos_intermediats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parts</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-            <span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">p</span><span class="p">),</span> <span class="n">init</span><span class="o">=</span><span class="n">p</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">final_pos</span><span class="p">,</span> <span class="n">pos_intermediats</span></div>
+<span class="c1">#         final_pos, pos_intermediats = self.parts.scan(</span>
+<span class="c1">#             lambda p, s: (s.move(p), p), init=p</span>
+<span class="c1">#         )</span>
+<span class="c1">#         return final_pos, pos_intermediats</span>
 
+<span class="c1">#     def clip(self) -&gt; &quot;path&quot;:</span>
+<span class="c1">#         return path(self.parts.map(lambda x: x.clip()))</span>
 
-<div class="viewcode-block" id="path.clip">
-<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.path.clip">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">clip</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;path&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parts</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">clip</span><span class="p">()))</span></div>
+<span class="c1">#     def __getitem__(self, idx: int) -&gt; path_segment:</span>
+<span class="c1">#         return self.parts[idx].unwrap()</span>
 
+<span class="c1">#     def __len__(self):</span>
+<span class="c1">#         return len(self.parts)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">path_segment</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parts</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span>
+<span class="c1">#     def __iter__(self):</span>
+<span class="c1">#         return (self[i] for i in range(len(self)))</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parts</span><span class="p">)</span>
+<span class="c1">#     @staticmethod</span>
+<span class="c1">#     def from_parts(*segs: path_segment) -&gt; &quot;path&quot;:</span>
+<span class="c1">#         return path(batched.stack([batched.create(s) for s in segs]))</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span>
+<span class="c1">#     __repr__ = pformat_repr</span>
 
-<div class="viewcode-block" id="path.from_parts">
-<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.path.from_parts">[docs]</a>
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">from_parts</span><span class="p">(</span><span class="o">*</span><span class="n">segs</span><span class="p">:</span> <span class="n">path_segment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;path&quot;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">path</span><span class="p">(</span><span class="n">batched</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">batched</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">segs</span><span class="p">]))</span></div>
-
-
-    <span class="fm">__repr__</span> <span class="o">=</span> <span class="n">pformat_repr</span>
-
-<div class="viewcode-block" id="path.plot">
-<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.path.plot">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">plot</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">position</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">style</span><span class="p">:</span> <span class="n">plot_style</span> <span class="o">=</span> <span class="n">plot_style</span><span class="p">()</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plotable</span><span class="p">:</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">seg_starts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">batched_vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">style</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">parts</span><span class="p">,</span> <span class="n">seg_starts</span><span class="p">)</span></div>
-</div>
-
+<span class="c1">#     def plot(</span>
+<span class="c1">#         self, start: position | None = None, style: plot_style = plot_style()</span>
+<span class="c1">#     ) -&gt; plotable:</span>
+<span class="c1">#         _, seg_starts = self.move(start)</span>
+<span class="c1">#         return batched_vmap(lambda p, s: p.plot(s, style), self.parts, seg_starts)</span>
 </pre></div>
 
           </div>

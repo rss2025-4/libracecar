@@ -38,13 +38,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">multiprocessing.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">SpawnProcess</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">multiprocessing.process</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseProcess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">threading</span><span class="w"> </span><span class="kn">import</span> <span class="n">Thread</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Concatenate</span><span class="p">,</span> <span class="n">ParamSpec</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ParamSpec</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">rclpy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">rclpy.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">Node</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">PropagatingThread</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">cast_unchecked</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">PropagatingThread</span><span class="p">,</span> <span class="n">cast_unchecked</span>
 
 <span class="n">P</span> <span class="o">=</span> <span class="n">ParamSpec</span><span class="p">(</span><span class="s2">&quot;P&quot;</span><span class="p">)</span>
 <span class="n">R</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;R&quot;</span><span class="p">)</span>
@@ -137,15 +138,35 @@
 
 <div class="viewcode-block" id="proc_manager.ros_launch">
 <a class="viewcode-back" href="../../libracecar.test_utils.html#libracecar.test_utils.proc_manager.ros_launch">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">ros_launch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">package_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">launch_file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ros_launch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">package_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">launch_file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">cmd_args</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="c1"># WARNING: this currently silently fails if a node in the lanuch file fails</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">popen</span><span class="p">([</span><span class="s2">&quot;ros2&quot;</span><span class="p">,</span> <span class="s2">&quot;launch&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">package_name</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">launch_file_name</span><span class="p">)])</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">popen</span><span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;ros2&quot;</span><span class="p">,</span> <span class="s2">&quot;launch&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">package_name</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">launch_file_name</span><span class="p">),</span> <span class="o">*</span><span class="n">cmd_args</span><span class="p">]</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="proc_manager.ros_run">
 <a class="viewcode-back" href="../../libracecar.test_utils.html#libracecar.test_utils.proc_manager.ros_run">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">ros_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">package_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">executable_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">popen</span><span class="p">([</span><span class="s2">&quot;ros2&quot;</span><span class="p">,</span> <span class="s2">&quot;run&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">package_name</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">executable_name</span><span class="p">)])</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ros_run</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">package_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">executable_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">ros_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">params_file</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ros2&quot;</span><span class="p">,</span> <span class="s2">&quot;run&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">package_name</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">executable_name</span><span class="p">),</span> <span class="s2">&quot;--ros-args&quot;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">ros_params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">ros_params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">cmd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-p&quot;</span><span class="p">)</span>
+                <span class="n">cmd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">:=</span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">params_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cmd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;--params-file&quot;</span><span class="p">)</span>
+            <span class="n">cmd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">params_file</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="proc_manager.ros_node_subproc">

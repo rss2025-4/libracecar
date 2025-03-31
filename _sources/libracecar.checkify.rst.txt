@@ -1,0 +1,7 @@
+libracecar.checkify module
+==========================
+
+.. automodule:: libracecar.checkify
+   :members:
+   :undoc-members:
+   :show-inheritance:

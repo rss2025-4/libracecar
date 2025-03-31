@@ -32,12 +32,8 @@
             
   <h1>Source code for libracecar.utils</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">threading</span><span class="w"> </span><span class="kn">import</span> <span class="n">Thread</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">Annotated</span><span class="p">,</span>
     <span class="n">Any</span><span class="p">,</span>
     <span class="n">Callable</span><span class="p">,</span>
     <span class="n">Concatenate</span><span class="p">,</span>
@@ -53,14 +49,12 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax._src.pretty_printer</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpyro</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">lax</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">tree_util</span> <span class="k">as</span> <span class="n">jtu</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tracer</span><span class="p">,</span> <span class="n">eval_jaxpr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax.experimental</span><span class="w"> </span><span class="kn">import</span> <span class="n">io_callback</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Bool</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Int</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">constraints</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Bool</span><span class="p">,</span> <span class="n">Complex64</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Int</span>
 
 <span class="n">F</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Callable</span><span class="p">)</span>
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
@@ -75,6 +69,7 @@
 <span class="n">fval</span> <span class="o">=</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]</span>
 <span class="n">ival</span> <span class="o">=</span> <span class="n">Int</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]</span>
 <span class="n">bval</span> <span class="o">=</span> <span class="n">Bool</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]</span>
+<span class="n">cval</span> <span class="o">=</span> <span class="n">Complex64</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]</span>
 
 <span class="n">fpair</span> <span class="o">=</span> <span class="n">Float</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;2&quot;</span><span class="p">]</span>
 
@@ -113,6 +108,16 @@
 
 
 <span class="n">cast_unchecked_</span> <span class="o">=</span> <span class="n">cast_unchecked</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="cast_fsig">
+<a class="viewcode-back" href="../../libracecar.utils.html#libracecar.utils.cast_fsig">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">cast_fsig</span><span class="p">(</span><span class="n">f1</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="n">f2</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">R</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">f2</span>
+
+    <span class="k">return</span> <span class="n">inner</span></div>
+
 
 
 <span class="c1"># jit = eqx.filter_jit</span>
@@ -337,6 +342,24 @@
 
 
 
+<div class="viewcode-block" id="tree_select">
+<a class="viewcode-back" href="../../libracecar.utils.html#libracecar.utils.tree_select">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">tree_select</span><span class="p">(</span>
+    <span class="n">pred</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">on_true</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span>
+    <span class="n">on_false</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+    <span class="n">pred_</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
+    <span class="n">bufs_true</span><span class="p">,</span> <span class="n">tree1</span> <span class="o">=</span> <span class="n">jtu</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">on_true</span><span class="p">)</span>
+    <span class="n">bufs_false</span><span class="p">,</span> <span class="n">tree2</span> <span class="o">=</span> <span class="n">jtu</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">on_false</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">tree1</span> <span class="o">==</span> <span class="n">tree2</span>
+    <span class="n">out_bufs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">pred_</span><span class="p">,</span> <span class="n">on_true</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">on_false</span><span class="o">=</span><span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bufs_true</span><span class="p">,</span> <span class="n">bufs_false</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="n">jtu</span><span class="o">.</span><span class="n">tree_unflatten</span><span class="p">(</span><span class="n">tree1</span><span class="p">,</span> <span class="n">out_bufs</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="PropagatingThread">
 <a class="viewcode-back" href="../../libracecar.utils.html#libracecar.utils.PropagatingThread">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PropagatingThread</span><span class="p">(</span><span class="n">Thread</span><span class="p">):</span>
@@ -358,19 +381,6 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">exc</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ret</span></div>
 </div>
-
-
-
-<div class="viewcode-block" id="numpyro_param">
-<a class="viewcode-back" href="../../libracecar.utils.html#libracecar.utils.numpyro_param">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">numpyro_param</span><span class="p">(</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">init_value</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
-    <span class="n">constraint</span><span class="p">:</span> <span class="n">constraints</span><span class="o">.</span><span class="n">Constraint</span> <span class="o">=</span> <span class="n">constraints</span><span class="o">.</span><span class="n">real</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-    <span class="n">ans</span> <span class="o">=</span> <span class="n">numpyro</span><span class="o">.</span><span class="n">param</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">init_value</span><span class="p">,</span> <span class="n">constraint</span><span class="o">=</span><span class="n">constraint</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">ans</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ans</span><span class="p">)</span></div>
 
 
 

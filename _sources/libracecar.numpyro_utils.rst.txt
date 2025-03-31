@@ -1,0 +1,7 @@
+libracecar.numpyro\_utils module
+================================
+
+.. automodule:: libracecar.numpyro_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:

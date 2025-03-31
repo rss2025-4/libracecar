@@ -34,27 +34,22 @@
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">equinox</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">eqx</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpyro</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpyro.distributions</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dist</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">optax</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">lax</span><span class="p">,</span> <span class="n">random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">random</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Float</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">numpyro.distributions</span><span class="w"> </span><span class="kn">import</span> <span class="n">constraints</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.batched</span><span class="w"> </span><span class="kn">import</span> <span class="n">batched</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.plot</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_ctx</span><span class="p">,</span> <span class="n">plot_point</span><span class="p">,</span> <span class="n">plot_style</span><span class="p">,</span> <span class="n">plotable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.numpyro_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">numpyro_param</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.plot</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_point</span><span class="p">,</span> <span class="n">plot_style</span><span class="p">,</span> <span class="n">plotable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">cast_unchecked_</span><span class="p">,</span>
-    <span class="n">debug_print</span><span class="p">,</span>
-    <span class="n">flike</span><span class="p">,</span>
     <span class="n">fpair</span><span class="p">,</span>
     <span class="n">fval</span><span class="p">,</span>
     <span class="n">jit</span><span class="p">,</span>
-    <span class="n">numpyro_param</span><span class="p">,</span>
     <span class="n">pformat_dataclass</span><span class="p">,</span>
-    <span class="n">pp_obj</span><span class="p">,</span>
-    <span class="n">pretty_print</span><span class="p">,</span>
 <span class="p">)</span>
 
 

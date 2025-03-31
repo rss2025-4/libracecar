@@ -8,13 +8,16 @@ Submodules
    :maxdepth: 4
 
    libracecar.batched
+   libracecar.checkify
    libracecar.cone_inference
+   libracecar.numpyro_utils
    libracecar.plot
    libracecar.sandbox
    libracecar.specs
    libracecar.test_utils
    libracecar.transforms
    libracecar.utils
+   libracecar.vector
 
 Module contents
 ---------------
