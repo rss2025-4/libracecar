@@ -1,5 +1,6 @@
 import dataclasses
-from functools import partial
+import time
+from dataclasses import dataclass
 from threading import Thread
 from typing import (
     Any,
@@ -28,6 +29,7 @@ from jaxtyping import Array, ArrayLike, Bool, Complex64, Float, Int, Int32
 
 F = TypeVar("F", bound=Callable)
 T = TypeVar("T")
+T2 = TypeVar("T2")
 N = TypeVar("N")
 R = TypeVar("R", covariant=True)
 P = ParamSpec("P")
@@ -94,11 +96,8 @@ class _jit_wrapped(Protocol[P, R]):
     ) -> Callable[P2, R2]: ...
     @overload
     def __get__(
-        self: "_jit_wrapped[Concatenate[T, P2], R2]",
-        obj: None,
-        objtype: type | None = None,
-        /,
-    ) -> "_jit_wrapped[Concatenate[T, P2], R2]": ...
+        self, obj: None, objtype: type | None = None, /
+    ) -> "_jit_wrapped[P, R]": ...
     def trace(self, *args: P.args, **kwargs: P.kwargs) -> jax.stages.Traced: ...
     def lower(self, *args: P.args, **kwargs: P.kwargs) -> jax.stages.Lowered: ...
 
@@ -118,11 +117,11 @@ def _wrap_jit(
 jit = _wrap_jit(jax.jit)
 
 
-def io_callback_(fn: Callable[P, R], result_shape_dtypes: R = None):
+def io_callback_(
+    fn: Callable[P, R], result_shape_dtypes: R = None, ordered: bool = True
+):
     def inner(*args: P.args, **kwargs: P.kwargs) -> R:
-        return io_callback(
-            fn, result_shape_dtypes=result_shape_dtypes, ordered=True, *args, **kwargs
-        )
+        return io_callback(fn, result_shape_dtypes, *args, ordered=ordered, **kwargs)
 
     return inner
 
@@ -254,13 +253,13 @@ def pp_obj(name: pp.Doc | str, *fields: pp.Doc | str):
 
 def safe_select(
     pred: ArrayLike,
-    on_true: Callable[[], ArrayLike],
-    on_false: Callable[[], ArrayLike],
-) -> ArrayLike:
+    on_true: Callable[[], T],
+    on_false: Callable[[], T],
+) -> T:
     # https://github.com/jax-ml/jax/issues/1052
 
-    def handle_side(assume_side: bool, f: Callable[[], ArrayLike]):
-        jaxpr = jax.make_jaxpr(f)()
+    def handle_side(assume_side: bool, f: Callable[[], T]):
+        jaxpr, shapes = jax.make_jaxpr(f, return_shape=True)()
         consts = [
             lax.select(
                 pred,
@@ -269,10 +268,10 @@ def safe_select(
             )
             for x in jaxpr.consts
         ]
-        (ans,) = eval_jaxpr(jaxpr.jaxpr, consts)
-        return ans
+        out_bufs = eval_jaxpr(jaxpr.jaxpr, consts)
+        return jtu.tree_unflatten(jtu.tree_structure(shapes), out_bufs)
 
-    return lax.select(
+    return tree_select(
         pred,
         on_true=handle_side(True, on_true),
         on_false=handle_side(False, on_false),
@@ -351,3 +350,68 @@ def ensure_not_weak_typed(x: T) -> T:
         treedef,
         [_ensure_not_weak_typed(b) for b in bufs],
     )
+
+
+def tree_to_ShapeDtypeStruct(v: T) -> T:
+    def inner(x):
+        if isinstance(x, jax.ShapeDtypeStruct):
+            return x
+        x = jnp.array(x)
+        return jax.ShapeDtypeStruct(x.shape, x.dtype)
+
+    return jtu.tree_map(inner, v)
+
+
+@dataclass
+class timer:
+    _time: float | None = None
+    _time_fn: Callable[[], float] = time.time
+
+    @staticmethod
+    def create(fn: Callable[[], float] = time.time):
+        return timer(fn(), fn)
+
+    def update(self) -> float:
+        assert self._time is not None
+        new_t = self._time_fn()
+        assert new_t >= self._time
+        ans = new_t - self._time
+        self._time = new_t
+        return ans
+
+    def __enter__(self):
+        self.update()
+        return self
+
+    @property
+    def val(self):
+        assert self._time is not None
+        ans = self._time_fn() - self._time
+        assert ans >= 0
+        return ans
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._time = None
+
+
+class lazy(eqx.Module, Generic[T]):
+    fn: Callable[..., T] = eqx.field(static=True)
+    args: Any
+    kwargs: Any
+
+    def __init__(self, fn: Callable[P, T], *args: P.args, **kwargs: P.kwargs):
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self):
+        return self.fn(*self.args, **self.kwargs)
+
+    @staticmethod
+    def get(v: "lazylike[T2]") -> T2:
+        if isinstance(v, lazy):
+            return v()
+        return v
+
+
+lazylike = lazy[T] | T

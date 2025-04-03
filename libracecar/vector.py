@@ -5,12 +5,7 @@ from jax import numpy as jnp
 from jaxtyping import ArrayLike, Complex64, Float
 
 from .plot import plot_point, plot_style, plotable
-from .utils import (
-    bval,
-    flike,
-    fval,
-    pformat_repr,
-)
+from .utils import bval, flike, fval, jit, pformat_repr
 
 
 class vec(eqx.Module):
@@ -86,12 +81,14 @@ class vec(eqx.Module):
 
 class unitvec(vec):
 
-    @staticmethod
-    def zero():
+    @classmethod
+    @property
+    def one(cls):
         return unitvec(lax.complex(1.0, 0.0))
 
-    @staticmethod
-    def perp():
+    @classmethod
+    @property
+    def i(cls):
         return unitvec(lax.complex(0.0, 1.0))
 
     def invert(self):
@@ -102,6 +99,7 @@ class unitvec(vec):
         assert jnp.shape(a) == ()
         return unitvec(lax.complex(jnp.cos(a), jnp.sin(a)))
 
+    @jit
     def to_angle(self) -> fval:
         return jnp.arctan2(self.y, self.x)
 

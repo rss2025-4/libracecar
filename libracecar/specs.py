@@ -6,9 +6,11 @@ import math
 from typing import TypeVar
 
 import equinox as eqx
+from geometry_msgs.msg import TransformStamped
 from jax import Array
 from jax import numpy as jnp
 from jaxtyping import ArrayLike, Float
+from tf_transformations import euler_from_quaternion
 
 from libracecar.vector import unitvec, vec
 
@@ -16,6 +18,7 @@ from .batched import batched
 from .plot import plot_point, plot_style, plotable
 from .utils import (
     flike,
+    lazy,
     pp_obj,
     pretty_print,
 )
@@ -41,11 +44,11 @@ class position(eqx.Module):
 
     @staticmethod
     def zero():
-        return position(vec.create(0.0, 0.0), unitvec.zero())
+        return position(vec.create(0.0, 0.0), unitvec.one)
 
     @staticmethod
     def translation(coord: Float[ArrayLike, "2"]):
-        return position(vec.from_arr(coord), unitvec.zero())
+        return position(vec.from_arr(coord), unitvec.one)
 
     @staticmethod
     def create(
@@ -53,11 +56,24 @@ class position(eqx.Module):
     ):
         coord = jnp.array(coord)
         if heading is None:
-            rot = unitvec.zero()
+            rot = unitvec.one
         else:
             rot = unitvec.from_angle(heading)
         assert coord.shape == (2,)
         return position(vec.from_arr(coord), rot)
+
+    @staticmethod
+    def from_ros(pose: TransformStamped) -> lazy["position"]:
+        trans = pose.transform.translation
+
+        pos_rot = pose.transform.rotation
+        pos_rot_ = euler_from_quaternion((pos_rot.x, pos_rot.y, pos_rot.z, pos_rot.w))
+
+        assert pos_rot_[0] == 0.0
+        assert pos_rot_[1] == 0.0
+
+        assert trans.z == 0.0
+        return lazy(position.create, (trans.x, trans.y), pos_rot_[2])
 
     def __add__(self, p: "position"):
         return position(
@@ -107,6 +123,7 @@ class position(eqx.Module):
 #     def move(self, old: position) -> position:
 #         # ang=pi/8 ==> circle of radius 1
 #         # ang=pi/8 , dist=pi/2 ==> turn=pi/2
+
 
 #         turn = (self.angle / turn_angle_limit) * self.length / min_turn_radius
 
