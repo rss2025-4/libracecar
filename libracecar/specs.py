@@ -43,6 +43,12 @@ class position(eqx.Module):
         return jnp.array([self.x, self.y, self.rot.to_angle()])
 
     @staticmethod
+    def from_arr(arr: Float[ArrayLike, "3"]) -> "position":
+        arr = jnp.array(arr)
+        assert arr.shape == (3,)
+        return position.create((arr[0], arr[1]), arr[2])
+
+    @staticmethod
     def zero():
         return position(vec.create(0.0, 0.0), unitvec.one)
 
@@ -75,6 +81,10 @@ class position(eqx.Module):
         assert trans.z == 0.0
         return lazy(position.create, (trans.x, trans.y), pos_rot_[2])
 
+    @staticmethod
+    def lazy_zero() -> lazy["position"]:
+        return lazy(position.create, (0.0, 0.0), 0.0)
+
     def __add__(self, p: "position"):
         return position(
             tran=self.tran + p.tran * self.rot,
@@ -82,9 +92,10 @@ class position(eqx.Module):
         )
 
     def invert_pose(self):
+        inv_r = self.rot.invert()
         return position(
-            tran=-self.tran * self.rot,
-            rot=self.rot.invert(),
+            tran=-self.tran * inv_r,
+            rot=inv_r,
         )
 
     def plot_as_point(self, style: plot_style = plot_style()) -> plotable:

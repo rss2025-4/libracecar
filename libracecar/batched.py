@@ -69,7 +69,6 @@ def _batched_treemap_of(fn: Callable[Concatenate[tuple[Array, ...], P], Array]):
 def _batched_treemap_of_one(
     fn: Callable[Concatenate[Array, P], Array],
 ):
-    @functools.wraps(fn)
     def inner(arg: batched[T], *args: P.args, **kwargs: P.kwargs) -> batched[T]:
         return batched_treemap(lambda buf: fn(buf, *args, **kwargs), arg)
 
@@ -151,6 +150,7 @@ class batched(eqx.Module, Generic[T_co]):
     concat = staticmethod(_batched_treemap_of(jnp.concat))
     stack = staticmethod(_batched_treemap_of(jnp.stack))
     roll = _batched_treemap_of_one(jnp.roll)
+    mean = _batched_treemap_of_one(jnp.mean)
 
     def __getitem__(self, idx: Any) -> batched[T_co]:
         return batched_treemap(lambda x: x[idx], self)

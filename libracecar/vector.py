@@ -97,6 +97,7 @@ class unitvec(vec):
     @staticmethod
     def from_angle(a: flike):
         assert jnp.shape(a) == ()
+        a = jnp.array(a)
         return unitvec(lax.complex(jnp.cos(a), jnp.sin(a)))
 
     @jit

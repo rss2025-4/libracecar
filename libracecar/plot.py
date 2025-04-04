@@ -175,6 +175,22 @@ class plot_ctx(eqx.Module):
 plotable = batched[Callable[[plot_ctx], plot_ctx]] | batched["plotable"]
 
 
+class plotfn_(eqx.Module):
+    f: Callable = eqx.field(static=True)
+    args: Any
+    kwargs: Any
+
+    def __call__(self, ctx: plot_ctx):
+        return self.f(ctx, *self.args, **self.kwargs)
+
+
+def plotfn(f: Callable[Concatenate[plot_ctx, P], plot_ctx]) -> Callable[P, plotable]:
+    def inner(*args: P.args, **kwargs: P.kwargs) -> plotable:
+        return batched.create(plotfn_(f, args, kwargs))
+
+    return inner
+
+
 class plotmethod_(eqx.Module):
     f: Callable = eqx.field(static=True)
     self_: Any

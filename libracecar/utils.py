@@ -310,7 +310,7 @@ class PropagatingThread(Thread):
 
 
 def shape_of(x: ArrayLike) -> tuple[int, ...]:
-    return core.get_aval(x).shape  # type: ignore
+    return jnp.shape(x)
 
 
 def tree_at_(
