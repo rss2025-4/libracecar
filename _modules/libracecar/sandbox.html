@@ -270,7 +270,10 @@
     <span class="n">error_t</span><span class="o">.</span><span class="vm">__qualname__</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">_tp</span><span class="o">.</span><span class="vm">__qualname__</span>
 
     <span class="n">__tracebackhide__</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="k">raise</span> <span class="n">error_t</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;(from </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> under isolate):</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">res</span><span class="o">.</span><span class="n">_str</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="n">error_t</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;(from </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> under isolate):</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;&gt; &quot;</span> <span class="o">+</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">res</span><span class="o">.</span><span class="n">_str</span><span class="o">.</span><span class="n">splitlines</span><span class="p">())</span>
+    <span class="p">)</span></div>
 
 
 

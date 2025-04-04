@@ -10,8 +10,10 @@ Submodules
    libracecar.batched
    libracecar.checkify
    libracecar.cone_inference
+   libracecar.jax_utils
    libracecar.numpyro_utils
    libracecar.plot
+   libracecar.ros_utils
    libracecar.sandbox
    libracecar.specs
    libracecar.test_utils

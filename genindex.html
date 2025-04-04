@@ -40,6 +40,7 @@
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
  | <a href="#J"><strong>J</strong></a>
@@ -47,6 +48,7 @@
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
@@ -71,7 +73,11 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="libracecar.plot.html#libracecar.plot.plotmethod_.args">args (libracecar.plot.plotmethod_ attribute)</a>
+
+      <ul>
+        <li><a href="libracecar.utils.html#libracecar.utils.lazy.args">(libracecar.utils.lazy attribute)</a>
 </li>
+      </ul></li>
       <li><a href="libracecar.specs.html#libracecar.specs.position.as_arr">as_arr() (libracecar.specs.position method)</a>
 
       <ul>
@@ -90,11 +96,13 @@
 </li>
       <li><a href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.batched_dist">batched_dist (class in libracecar.numpyro_utils)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="libracecar.batched.html#libracecar.batched.batched_treemap">batched_treemap() (in module libracecar.batched)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="libracecar.batched.html#libracecar.batched.batched_vmap">batched_vmap() (in module libracecar.batched)</a>
+</li>
+      <li><a href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.batched_vmap_with_rng">batched_vmap_with_rng() (in module libracecar.numpyro_utils)</a>
 </li>
       <li><a href="libracecar.batched.html#libracecar.batched.batched_zip">batched_zip() (in module libracecar.batched)</a>
 </li>
@@ -130,9 +138,11 @@
 </li>
       <li><a href="libracecar.cone_inference.html#libracecar.cone_inference.compute_posterior">compute_posterior() (in module libracecar.cone_inference)</a>
 </li>
+      <li><a href="libracecar.batched.html#libracecar.batched.batched.concat">concat() (libracecar.batched.batched static method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="libracecar.batched.html#libracecar.batched.batched.concat">concat() (libracecar.batched.batched static method)</a>
+      <li><a href="libracecar.utils.html#libracecar.utils.cond_">cond_() (in module libracecar.utils)</a>
 </li>
       <li><a href="libracecar.cone_inference.html#libracecar.cone_inference.cone_dist">cone_dist (class in libracecar.cone_inference)</a>
 </li>
@@ -153,6 +163,8 @@
 </li>
         <li><a href="libracecar.specs.html#libracecar.specs.position.create">(libracecar.specs.position static method)</a>
 </li>
+        <li><a href="libracecar.utils.html#libracecar.utils.timer.create">(libracecar.utils.timer static method)</a>
+</li>
         <li><a href="libracecar.vector.html#libracecar.vector.vec.create">(libracecar.vector.vec static method)</a>
 </li>
       </ul></li>
@@ -164,9 +176,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="libracecar.utils.html#libracecar.utils.debug_callback">debug_callback() (in module libracecar.utils)</a>
 </li>
+      <li><a href="libracecar.utils.html#libracecar.utils.debug_print">debug_print() (in module libracecar.utils)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="libracecar.utils.html#libracecar.utils.debug_print">debug_print() (in module libracecar.utils)</a>
+      <li><a href="libracecar.jax_utils.html#libracecar.jax_utils.dispatch_spec">dispatch_spec (class in libracecar.jax_utils)</a>
 </li>
       <li><a href="libracecar.batched.html#libracecar.batched.batched.dynamic_slice">dynamic_slice() (libracecar.batched.batched method)</a>
 </li>
@@ -176,6 +190,8 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="libracecar.utils.html#libracecar.utils.ensure_not_weak_typed">ensure_not_weak_typed() (in module libracecar.utils)</a>
+</li>
       <li><a href="libracecar.batched.html#libracecar.batched.batched.enumerate">enumerate() (libracecar.batched.batched method)</a>
 </li>
   </ul></td>
@@ -198,15 +214,29 @@
       </ul></li>
       <li><a href="libracecar.batched.html#libracecar.batched.batched.filter">filter() (libracecar.batched.batched method)</a>
 </li>
+      <li><a href="libracecar.batched.html#libracecar.batched.batched.filter_arr">filter_arr() (libracecar.batched.batched method)</a>
+</li>
+      <li><a href="libracecar.ros_utils.html#libracecar.ros_utils.float_to_time_msg">float_to_time_msg() (in module libracecar.ros_utils)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="libracecar.batched.html#libracecar.batched.batched.filter_arr">filter_arr() (libracecar.batched.batched method)</a>
+      <li><a href="libracecar.utils.html#libracecar.utils.lazy.fn">fn (libracecar.utils.lazy attribute)</a>
 </li>
       <li><a href="libracecar.vector.html#libracecar.vector.unitvec.from_angle">from_angle() (libracecar.vector.unitvec static method)</a>
 </li>
       <li><a href="libracecar.vector.html#libracecar.vector.vec.from_arr">from_arr() (libracecar.vector.vec static method)</a>
 </li>
       <li><a href="libracecar.cone_inference.html#libracecar.cone_inference.cone_dist.from_mean_cov">from_mean_cov() (libracecar.cone_inference.cone_dist static method)</a>
+</li>
+      <li><a href="libracecar.specs.html#libracecar.specs.position.from_ros">from_ros() (libracecar.specs.position static method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="libracecar.utils.html#libracecar.utils.lazy.get">get() (libracecar.utils.lazy static method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -222,6 +252,8 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="libracecar.vector.html#libracecar.vector.unitvec.i">i (libracecar.vector.unitvec property)</a>
+</li>
       <li><a href="libracecar.plot.html#libracecar.plot.plot_ctx.idx">idx (libracecar.plot.plot_ctx attribute)</a>
 </li>
       <li><a href="libracecar.vector.html#libracecar.vector.unitvec.invert">invert() (libracecar.vector.unitvec method)</a>
@@ -240,6 +272,14 @@
 <h2 id="J">J</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher">jax_jit_dispatcher (class in libracecar.jax_utils)</a>
+</li>
+      <li><a href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.jit_with_seed">jit_with_seed() (in module libracecar.numpyro_utils)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher.jit_with_setup">jit_with_setup() (libracecar.jax_utils.jax_jit_dispatcher method)</a>
+</li>
       <li><a href="libracecar.utils.html#libracecar.utils.PropagatingThread.join">join() (libracecar.utils.PropagatingThread method)</a>
 </li>
   </ul></td>
@@ -249,13 +289,19 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="libracecar.plot.html#libracecar.plot.plotmethod_.kwargs">kwargs (libracecar.plot.plotmethod_ attribute)</a>
+
+      <ul>
+        <li><a href="libracecar.utils.html#libracecar.utils.lazy.kwargs">(libracecar.utils.lazy attribute)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="libracecar.utils.html#libracecar.utils.lazy">lazy (class in libracecar.utils)</a>
+</li>
       <li>
     libracecar
 
@@ -285,6 +331,13 @@
 </li>
       </ul></li>
       <li>
+    libracecar.jax_utils
+
+      <ul>
+        <li><a href="libracecar.jax_utils.html#module-libracecar.jax_utils">module</a>
+</li>
+      </ul></li>
+      <li>
     libracecar.numpyro_utils
 
       <ul>
@@ -299,14 +352,21 @@
 </li>
       </ul></li>
       <li>
+    libracecar.ros_utils
+
+      <ul>
+        <li><a href="libracecar.ros_utils.html#module-libracecar.ros_utils">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
     libracecar.sandbox
 
       <ul>
         <li><a href="libracecar.sandbox.html#module-libracecar.sandbox">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     libracecar.specs
 
@@ -376,9 +436,13 @@
 </li>
         <li><a href="libracecar.cone_inference.html#module-libracecar.cone_inference">libracecar.cone_inference</a>
 </li>
+        <li><a href="libracecar.jax_utils.html#module-libracecar.jax_utils">libracecar.jax_utils</a>
+</li>
         <li><a href="libracecar.numpyro_utils.html#module-libracecar.numpyro_utils">libracecar.numpyro_utils</a>
 </li>
         <li><a href="libracecar.plot.html#module-libracecar.plot">libracecar.plot</a>
+</li>
+        <li><a href="libracecar.ros_utils.html#module-libracecar.ros_utils">libracecar.ros_utils</a>
 </li>
         <li><a href="libracecar.sandbox.html#module-libracecar.sandbox">libracecar.sandbox</a>
 </li>
@@ -413,7 +477,17 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="libracecar.cone_inference.html#libracecar.cone_inference.normal">normal() (in module libracecar.cone_inference)</a>
 </li>
+      <li><a href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.normal_">normal_() (in module libracecar.numpyro_utils)</a>
+</li>
       <li><a href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.numpyro_param">numpyro_param() (in module libracecar.numpyro_utils)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="libracecar.vector.html#libracecar.vector.unitvec.one">one (libracecar.vector.unitvec property)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -421,8 +495,6 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="libracecar.vector.html#libracecar.vector.unitvec.perp">perp() (libracecar.vector.unitvec static method)</a>
-</li>
       <li><a href="libracecar.utils.html#libracecar.utils.pformat_dataclass">pformat_dataclass() (in module libracecar.utils)</a>
 </li>
       <li><a href="libracecar.utils.html#libracecar.utils.pformat_repr">pformat_repr() (in module libracecar.utils)</a>
@@ -447,12 +519,12 @@
 </li>
       <li><a href="libracecar.plot.html#libracecar.plot.plotmethod">plotmethod (class in libracecar.plot)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="libracecar.plot.html#libracecar.plot.plotmethod_">plotmethod_ (class in libracecar.plot)</a>
 </li>
       <li><a href="libracecar.plot.html#libracecar.plot.plot_ctx.point_batched">point_batched() (libracecar.plot.plot_ctx method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="libracecar.plot.html#libracecar.plot.plot_ctx.points">points (libracecar.plot.plot_ctx attribute)</a>
 </li>
       <li><a href="libracecar.test_utils.html#libracecar.test_utils.proc_manager.popen">popen (libracecar.test_utils.proc_manager property)</a>
@@ -469,7 +541,11 @@
 </li>
       <li><a href="libracecar.utils.html#libracecar.utils.pretty_print">pretty_print() (in module libracecar.utils)</a>
 </li>
+      <li><a href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.prng_key_">prng_key_() (in module libracecar.numpyro_utils)</a>
+</li>
       <li><a href="libracecar.test_utils.html#libracecar.test_utils.proc_manager">proc_manager (class in libracecar.test_utils)</a>
+</li>
+      <li><a href="libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher.process">process() (libracecar.jax_utils.jax_jit_dispatcher method)</a>
 </li>
       <li><a href="libracecar.vector.html#libracecar.vector.unitvec.project">project() (libracecar.vector.unitvec method)</a>
 </li>
@@ -498,6 +574,8 @@
       <li><a href="libracecar.test_utils.html#libracecar.test_utils.proc_manager.ros_run">ros_run() (libracecar.test_utils.proc_manager method)</a>
 </li>
       <li><a href="libracecar.specs.html#libracecar.specs.position.rot">rot (libracecar.specs.position attribute)</a>
+</li>
+      <li><a href="libracecar.utils.html#libracecar.utils.round_clip">round_clip() (in module libracecar.utils)</a>
 </li>
       <li><a href="libracecar.utils.html#libracecar.utils.PropagatingThread.run">run() (libracecar.utils.PropagatingThread method)</a>
 </li>
@@ -533,8 +611,12 @@
 </li>
       <li><a href="libracecar.utils.html#libracecar.utils.shape_of">shape_of() (in module libracecar.utils)</a>
 </li>
-      <li><a href="libracecar.test_utils.html#libracecar.test_utils.proc_manager.spin">spin() (libracecar.test_utils.proc_manager method)</a>
+      <li><a href="libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher.spin">spin() (libracecar.jax_utils.jax_jit_dispatcher method)</a>
+
+      <ul>
+        <li><a href="libracecar.test_utils.html#libracecar.test_utils.proc_manager.spin">(libracecar.test_utils.proc_manager method)</a>
 </li>
+      </ul></li>
       <li><a href="libracecar.batched.html#libracecar.batched.batched.split_tuple">split_tuple() (libracecar.batched.batched method)</a>
 </li>
       <li><a href="libracecar.batched.html#libracecar.batched.batched.stack">stack() (libracecar.batched.batched static method)</a>
@@ -559,6 +641,10 @@
         <li><a href="libracecar.test_utils.html#libracecar.test_utils.proc_manager.thread">(libracecar.test_utils.proc_manager method)</a>
 </li>
       </ul></li>
+      <li><a href="libracecar.ros_utils.html#libracecar.ros_utils.time_msg_to_float">time_msg_to_float() (in module libracecar.ros_utils)</a>
+</li>
+      <li><a href="libracecar.utils.html#libracecar.utils.timer">timer (class in libracecar.utils)</a>
+</li>
       <li><a href="libracecar.vector.html#libracecar.vector.unitvec.to_angle">to_angle() (libracecar.vector.unitvec method)</a>
 </li>
   </ul></td>
@@ -571,6 +657,10 @@
 </li>
       <li><a href="libracecar.utils.html#libracecar.utils.tree_select">tree_select() (in module libracecar.utils)</a>
 </li>
+      <li><a href="libracecar.utils.html#libracecar.utils.tree_to_ShapeDtypeStruct">tree_to_ShapeDtypeStruct() (in module libracecar.utils)</a>
+</li>
+      <li><a href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.trunc_normal_">trunc_normal_() (in module libracecar.numpyro_utils)</a>
+</li>
       <li><a href="libracecar.batched.html#libracecar.batched.batched.tuple_map">tuple_map() (libracecar.batched.batched method)</a>
 </li>
   </ul></td>
@@ -581,11 +671,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="libracecar.batched.html#libracecar.batched.batched.unflatten">unflatten() (libracecar.batched.batched method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="libracecar.vector.html#libracecar.vector.unitvec">unitvec (class in libracecar.vector)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="libracecar.batched.html#libracecar.batched.batched.unwrap">unwrap() (libracecar.batched.batched method)</a>
+</li>
+      <li><a href="libracecar.utils.html#libracecar.utils.timer.update">update() (libracecar.utils.timer method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -593,6 +685,8 @@
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="libracecar.utils.html#libracecar.utils.timer.val">val (libracecar.utils.timer property)</a>
+</li>
       <li><a href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.batched_dist.variance">variance (libracecar.numpyro_utils.batched_dist property)</a>
 </li>
   </ul></td>
@@ -644,11 +738,7 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="libracecar.specs.html#libracecar.specs.position.zero">zero() (libracecar.specs.position static method)</a>
-
-      <ul>
-        <li><a href="libracecar.vector.html#libracecar.vector.unitvec.zero">(libracecar.vector.unitvec static method)</a>
 </li>
-      </ul></li>
   </ul></td>
 </tr></table>
 
