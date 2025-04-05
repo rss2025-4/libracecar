@@ -164,6 +164,7 @@
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_angle</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="n">flike</span><span class="p">):</span>
         <span class="k">assert</span> <span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="p">()</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">unitvec</span><span class="p">(</span><span class="n">lax</span><span class="o">.</span><span class="n">complex</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">a</span><span class="p">)))</span></div>
 
 

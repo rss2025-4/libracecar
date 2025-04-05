@@ -80,6 +80,15 @@
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rot</span><span class="o">.</span><span class="n">to_angle</span><span class="p">()])</span></div>
 
 
+<div class="viewcode-block" id="position.from_arr">
+<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.position.from_arr">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_arr</span><span class="p">(</span><span class="n">arr</span><span class="p">:</span> <span class="n">Float</span><span class="p">[</span><span class="n">ArrayLike</span><span class="p">,</span> <span class="s2">&quot;3&quot;</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;position&quot;</span><span class="p">:</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">3</span><span class="p">,)</span>
+        <span class="k">return</span> <span class="n">position</span><span class="o">.</span><span class="n">create</span><span class="p">((</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">arr</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span></div>
+
+
 <div class="viewcode-block" id="position.zero">
 <a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.position.zero">[docs]</a>
     <span class="nd">@staticmethod</span>
@@ -125,6 +134,13 @@
         <span class="k">return</span> <span class="n">lazy</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">create</span><span class="p">,</span> <span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">trans</span><span class="o">.</span><span class="n">y</span><span class="p">),</span> <span class="n">pos_rot_</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span></div>
 
 
+<div class="viewcode-block" id="position.lazy_zero">
+<a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.position.lazy_zero">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">lazy_zero</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">lazy</span><span class="p">[</span><span class="s2">&quot;position&quot;</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">lazy</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">create</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span></div>
+
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="s2">&quot;position&quot;</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">position</span><span class="p">(</span>
             <span class="n">tran</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tran</span> <span class="o">+</span> <span class="n">p</span><span class="o">.</span><span class="n">tran</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rot</span><span class="p">,</span>
@@ -134,9 +150,10 @@
 <div class="viewcode-block" id="position.invert_pose">
 <a class="viewcode-back" href="../../libracecar.specs.html#libracecar.specs.position.invert_pose">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">invert_pose</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">inv_r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rot</span><span class="o">.</span><span class="n">invert</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">position</span><span class="p">(</span>
-            <span class="n">tran</span><span class="o">=-</span><span class="bp">self</span><span class="o">.</span><span class="n">tran</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rot</span><span class="p">,</span>
-            <span class="n">rot</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rot</span><span class="o">.</span><span class="n">invert</span><span class="p">(),</span>
+            <span class="n">tran</span><span class="o">=-</span><span class="bp">self</span><span class="o">.</span><span class="n">tran</span> <span class="o">*</span> <span class="n">inv_r</span><span class="p">,</span>
+            <span class="n">rot</span><span class="o">=</span><span class="n">inv_r</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 

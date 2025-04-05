@@ -33,13 +33,26 @@
   <h1>Source code for libracecar.jax_utils</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">queue</span><span class="w"> </span><span class="kn">import</span> <span class="n">Queue</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">ParamSpec</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Concatenate</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">ParamSpec</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">lax</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">tree_util</span> <span class="k">as</span> <span class="n">jtu</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">cond_</span><span class="p">,</span> <span class="n">io_callback_</span><span class="p">,</span> <span class="n">jit</span><span class="p">,</span> <span class="n">tree_to_ShapeDtypeStruct</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PropagatingThread</span><span class="p">,</span>
+    <span class="n">cast</span><span class="p">,</span>
+    <span class="n">cond_</span><span class="p">,</span>
+    <span class="n">debug_callback</span><span class="p">,</span>
+    <span class="n">debug_print</span><span class="p">,</span>
+    <span class="n">flike</span><span class="p">,</span>
+    <span class="n">fval</span><span class="p">,</span>
+    <span class="n">io_callback_</span><span class="p">,</span>
+    <span class="n">jit</span><span class="p">,</span>
+    <span class="n">timer</span><span class="p">,</span>
+    <span class="n">tree_to_ShapeDtypeStruct</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">P</span> <span class="o">=</span> <span class="n">ParamSpec</span><span class="p">(</span><span class="s2">&quot;P&quot;</span><span class="p">)</span>
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
@@ -50,9 +63,14 @@
 <div class="viewcode-block" id="dispatch_spec">
 <a class="viewcode-back" href="../../libracecar.jax_utils.html#libracecar.jax_utils.dispatch_spec">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">dispatch_spec</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">,</span> <span class="n">A</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span> <span class="n">arg_ex</span><span class="p">:</span> <span class="n">A</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fn</span> <span class="o">=</span> <span class="n">fn</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">arg_ex</span> <span class="o">=</span> <span class="n">tree_to_ShapeDtypeStruct</span><span class="p">(</span><span class="n">arg_ex</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arg_ex</span> <span class="o">=</span> <span class="n">tree_to_ShapeDtypeStruct</span><span class="p">((</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span></div>
 
 
 
@@ -71,25 +89,45 @@
 
 <div class="viewcode-block" id="jax_jit_dispatcher.process">
 <a class="viewcode-back" href="../../libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher.process">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">,</span> <span class="n">A</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span> <span class="n">arg</span><span class="p">:</span> <span class="n">A</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">R</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">R</span><span class="p">:</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">meth</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">meth</span><span class="o">.</span><span class="n">fn</span> <span class="ow">is</span> <span class="n">fn</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">requesttype_q</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">request_q</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">request_q</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">((</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
                     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">response_q</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
         <span class="k">assert</span> <span class="kc">False</span></div>
 
 
-<div class="viewcode-block" id="jax_jit_dispatcher.jit_with_setup">
-<a class="viewcode-back" href="../../libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher.jit_with_setup">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">jit_with_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">setup_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">]):</span>
-        <span class="nd">@jit</span>
-        <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="n">init_val</span> <span class="o">=</span> <span class="n">setup_fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">spin</span><span class="p">(</span><span class="n">init_val</span><span class="p">)</span>
+<div class="viewcode-block" id="jax_jit_dispatcher.run_with_setup">
+<a class="viewcode-back" href="../../libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher.run_with_setup">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_with_setup</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">T</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PropagatingThread</span><span class="p">:</span>
+        <span class="n">lowered</span> <span class="o">=</span> <span class="n">jit</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">spin</span><span class="p">(</span><span class="n">fn</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;compiling:&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">timer</span><span class="o">.</span><span class="n">create</span><span class="p">()</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
+            <span class="n">comp</span> <span class="o">=</span> <span class="n">lowered</span><span class="o">.</span><span class="n">compile</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;took </span><span class="si">{</span><span class="n">t</span><span class="o">.</span><span class="n">val</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">inner</span></div>
+        <span class="k">def</span><span class="w"> </span><span class="nf">thread_fn</span><span class="p">():</span>
+            <span class="n">_</span> <span class="o">=</span> <span class="n">comp</span><span class="p">()</span>
+            <span class="k">assert</span> <span class="kc">False</span>
+
+        <span class="n">ans</span> <span class="o">=</span> <span class="n">PropagatingThread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">thread_fn</span><span class="p">)</span>
+        <span class="n">ans</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">ans</span></div>
+
+
+<div class="viewcode-block" id="jax_jit_dispatcher.run">
+<a class="viewcode-back" href="../../libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher.run">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">init</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PropagatingThread</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_with_setup</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">init</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_requesttype_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -107,8 +145,8 @@
 
         <span class="k">def</span><span class="w"> </span><span class="nf">handle_request</span><span class="p">(</span><span class="n">reqtype</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
             <span class="n">meth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">methods</span><span class="p">[</span><span class="n">reqtype</span><span class="p">]</span>
-            <span class="n">req</span> <span class="o">=</span> <span class="n">io_callback_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_request_callback</span><span class="p">,</span> <span class="n">meth</span><span class="o">.</span><span class="n">arg_ex</span><span class="p">)()</span>
-            <span class="n">new_s</span><span class="p">,</span> <span class="n">ans</span> <span class="o">=</span> <span class="n">meth</span><span class="o">.</span><span class="n">fn</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">req</span><span class="p">)</span>
+            <span class="n">req_args</span><span class="p">,</span> <span class="n">req_kwargs</span> <span class="o">=</span> <span class="n">io_callback_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_request_callback</span><span class="p">,</span> <span class="n">meth</span><span class="o">.</span><span class="n">arg_ex</span><span class="p">)()</span>
+            <span class="n">new_s</span><span class="p">,</span> <span class="n">ans</span> <span class="o">=</span> <span class="n">meth</span><span class="o">.</span><span class="n">fn</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="o">*</span><span class="n">req_args</span><span class="p">,</span> <span class="o">**</span><span class="n">req_kwargs</span><span class="p">)</span>
             <span class="n">io_callback_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_response_callback</span><span class="p">,</span> <span class="kc">None</span><span class="p">)(</span><span class="n">ans</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">new_s</span>
 
@@ -130,9 +168,27 @@
             <span class="n">cond_fun</span><span class="o">=</span><span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
             <span class="n">body_fun</span><span class="o">=</span><span class="n">loop_fn</span><span class="p">,</span>
             <span class="n">init_val</span><span class="o">=</span><span class="n">init_state</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">assert</span> <span class="kc">False</span></div>
+        <span class="p">)</span></div>
 </div>
+
+
+
+<div class="viewcode-block" id="divide_x_at_zero">
+<a class="viewcode-back" href="../../libracecar.jax_utils.html#libracecar.jax_utils.divide_x_at_zero">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">divide_x_at_zero</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">fval</span><span class="p">],</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">fval</span><span class="p">],</span> <span class="n">T</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;assumes f(0.) = 0. result only have valid first order gradient.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">jvp</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">fval</span><span class="p">],</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">flike</span><span class="p">],</span> <span class="n">T</span><span class="p">]:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">flike</span><span class="p">):</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">tangents</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jvp</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">primals</span><span class="o">=</span><span class="p">(</span><span class="n">x</span><span class="p">,),</span> <span class="n">tangents</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,))</span>
+            <span class="k">return</span> <span class="n">tangents</span>
+
+        <span class="k">return</span> <span class="n">inner</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">fval</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">jtu</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="n">jvp</span><span class="p">(</span><span class="n">f</span><span class="p">)(</span><span class="mf">0.0</span><span class="p">),</span> <span class="n">jvp</span><span class="p">(</span><span class="n">jvp</span><span class="p">(</span><span class="n">f</span><span class="p">))(</span><span class="mf">0.0</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">inner</span></div>
 
 </pre></div>
 

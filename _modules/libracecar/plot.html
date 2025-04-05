@@ -238,6 +238,28 @@
 <span class="n">plotable</span> <span class="o">=</span> <span class="n">batched</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">plot_ctx</span><span class="p">],</span> <span class="n">plot_ctx</span><span class="p">]]</span> <span class="o">|</span> <span class="n">batched</span><span class="p">[</span><span class="s2">&quot;plotable&quot;</span><span class="p">]</span>
 
 
+<div class="viewcode-block" id="plotfn_">
+<a class="viewcode-back" href="../../libracecar.plot.html#libracecar.plot.plotfn_">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">plotfn_</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">eqx</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="n">static</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n">Any</span>
+    <span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">plot_ctx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">f</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="plotfn">
+<a class="viewcode-back" href="../../libracecar.plot.html#libracecar.plot.plotfn">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plotfn</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">Concatenate</span><span class="p">[</span><span class="n">plot_ctx</span><span class="p">,</span> <span class="n">P</span><span class="p">],</span> <span class="n">plot_ctx</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">plotable</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">plotable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">batched</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">plotfn_</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">inner</span></div>
+
+
+
 <div class="viewcode-block" id="plotmethod_">
 <a class="viewcode-back" href="../../libracecar.plot.html#libracecar.plot.plotmethod_">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">plotmethod_</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>

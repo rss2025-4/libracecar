@@ -53,6 +53,7 @@
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.filter_arr"><code class="docutils literal notranslate"><span class="pre">batched.filter_arr()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.map"><code class="docutils literal notranslate"><span class="pre">batched.map()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.map_with_rng"><code class="docutils literal notranslate"><span class="pre">batched.map_with_rng()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.mean"><code class="docutils literal notranslate"><span class="pre">batched.mean()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.repeat"><code class="docutils literal notranslate"><span class="pre">batched.repeat()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.reshape"><code class="docutils literal notranslate"><span class="pre">batched.reshape()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.roll"><code class="docutils literal notranslate"><span class="pre">batched.roll()</span></code></a></li>
@@ -98,9 +99,11 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="libracecar.jax_utils.html">libracecar.jax_utils module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="libracecar.jax_utils.html#libracecar.jax_utils.dispatch_spec"><code class="docutils literal notranslate"><span class="pre">dispatch_spec</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="libracecar.jax_utils.html#libracecar.jax_utils.divide_x_at_zero"><code class="docutils literal notranslate"><span class="pre">divide_x_at_zero()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher"><code class="docutils literal notranslate"><span class="pre">jax_jit_dispatcher</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher.jit_with_setup"><code class="docutils literal notranslate"><span class="pre">jax_jit_dispatcher.jit_with_setup()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher.process"><code class="docutils literal notranslate"><span class="pre">jax_jit_dispatcher.process()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher.run"><code class="docutils literal notranslate"><span class="pre">jax_jit_dispatcher.run()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher.run_with_setup"><code class="docutils literal notranslate"><span class="pre">jax_jit_dispatcher.run_with_setup()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.jax_utils.html#libracecar.jax_utils.jax_jit_dispatcher.spin"><code class="docutils literal notranslate"><span class="pre">jax_jit_dispatcher.spin()</span></code></a></li>
 </ul>
 </li>
@@ -151,6 +154,13 @@
 <li class="toctree-l3"><a class="reference internal" href="libracecar.plot.html#libracecar.plot.plot_style.color"><code class="docutils literal notranslate"><span class="pre">plot_style.color</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="libracecar.plot.html#libracecar.plot.plotfn"><code class="docutils literal notranslate"><span class="pre">plotfn()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="libracecar.plot.html#libracecar.plot.plotfn_"><code class="docutils literal notranslate"><span class="pre">plotfn_</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.plot.html#libracecar.plot.plotfn_.args"><code class="docutils literal notranslate"><span class="pre">plotfn_.args</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.plot.html#libracecar.plot.plotfn_.f"><code class="docutils literal notranslate"><span class="pre">plotfn_.f</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.plot.html#libracecar.plot.plotfn_.kwargs"><code class="docutils literal notranslate"><span class="pre">plotfn_.kwargs</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="libracecar.plot.html#libracecar.plot.plotmethod"><code class="docutils literal notranslate"><span class="pre">plotmethod</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.plot.html#libracecar.plot.plotmethod.f"><code class="docutils literal notranslate"><span class="pre">plotmethod.f</span></code></a></li>
 </ul>
@@ -180,8 +190,10 @@
 <li class="toctree-l2"><a class="reference internal" href="libracecar.specs.html#libracecar.specs.position"><code class="docutils literal notranslate"><span class="pre">position</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.specs.html#libracecar.specs.position.as_arr"><code class="docutils literal notranslate"><span class="pre">position.as_arr()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.specs.html#libracecar.specs.position.create"><code class="docutils literal notranslate"><span class="pre">position.create()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.specs.html#libracecar.specs.position.from_arr"><code class="docutils literal notranslate"><span class="pre">position.from_arr()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.specs.html#libracecar.specs.position.from_ros"><code class="docutils literal notranslate"><span class="pre">position.from_ros()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.specs.html#libracecar.specs.position.invert_pose"><code class="docutils literal notranslate"><span class="pre">position.invert_pose()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.specs.html#libracecar.specs.position.lazy_zero"><code class="docutils literal notranslate"><span class="pre">position.lazy_zero()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.specs.html#libracecar.specs.position.plot_as_point"><code class="docutils literal notranslate"><span class="pre">position.plot_as_point()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.specs.html#libracecar.specs.position.plot_as_seg"><code class="docutils literal notranslate"><span class="pre">position.plot_as_seg()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.specs.html#libracecar.specs.position.rot"><code class="docutils literal notranslate"><span class="pre">position.rot</span></code></a></li>
