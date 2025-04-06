@@ -60,6 +60,12 @@
         <span class="k">return</span> <span class="n">vec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_v</span><span class="o">.</span><span class="n">conj</span><span class="p">())</span></div>
 
 
+<div class="viewcode-block" id="vec.normalize">
+<a class="viewcode-back" href="../../libracecar.vector.html#libracecar.vector.vec.normalize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;unitvec&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">unitvec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_v</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_v</span><span class="p">))</span></div>
+
+
 <div class="viewcode-block" id="vec.create">
 <a class="viewcode-back" href="../../libracecar.vector.html#libracecar.vector.vec.create">[docs]</a>
     <span class="nd">@staticmethod</span>

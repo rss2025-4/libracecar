@@ -139,12 +139,13 @@ will avoid explicit unstacking.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="libracecar.batched.batched.create">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#libracecar.batched.batched.create" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadcast</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#libracecar.batched.batched.create" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>val</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T2</span></code>)</span>)</p></li>
 <li><p><strong>batch_dims</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>]</span>)</p></li>
+<li><p><strong>broadcast</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></span>)</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -314,6 +315,32 @@ will avoid explicit unstacking.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="libracecar.batched.batched.sort">
+<span class="sig-name descname"><span class="pre">sort</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#libracecar.batched.batched.sort" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>key</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T_co</span></code>, covariant=True)], <code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code>]</span>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="libracecar.batched.batched.split_batch_dims">
+<span class="sig-name descname"><span class="pre">split_batch_dims</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inner</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#libracecar.batched.batched.split_batch_dims" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>outer</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>] | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>)</p></li>
+<li><p><strong>inner</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code>] | <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[<a class="reference internal" href="#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T_co</span></code>, covariant=True)]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="libracecar.batched.batched.split_tuple">
 <span class="sig-name descname"><span class="pre">split_tuple</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#libracecar.batched.batched.split_tuple" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -399,6 +426,23 @@ will be determined via type promotion rules described in <span class="xref std s
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="libracecar.batched.batched.sum">
+<span class="sig-name descname"><span class="pre">sum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#libracecar.batched.batched.sum" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>arg</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)]</span>)</p></li>
+<li><p><strong>args</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParamSpecArgs</span></code></span>)</p></li>
+<li><p><strong>kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParamSpecKwargs</span></code></span>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">T</span></code>)]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="libracecar.batched.batched.thread">
 <span class="sig-name descname"><span class="pre">thread</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">init</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#libracecar.batched.batched.thread" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -429,6 +473,11 @@ will be determined via type promotion rules described in <span class="xref std s
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="libracecar.batched.batched.uf">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">uf</span></span><a class="headerlink" href="#libracecar.batched.batched.uf" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="libracecar.batched.batched.unflatten">

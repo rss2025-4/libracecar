@@ -58,11 +58,15 @@
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.reshape"><code class="docutils literal notranslate"><span class="pre">batched.reshape()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.roll"><code class="docutils literal notranslate"><span class="pre">batched.roll()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.scan"><code class="docutils literal notranslate"><span class="pre">batched.scan()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.sort"><code class="docutils literal notranslate"><span class="pre">batched.sort()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.split_batch_dims"><code class="docutils literal notranslate"><span class="pre">batched.split_batch_dims()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.split_tuple"><code class="docutils literal notranslate"><span class="pre">batched.split_tuple()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.stack"><code class="docutils literal notranslate"><span class="pre">batched.stack()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.static_map"><code class="docutils literal notranslate"><span class="pre">batched.static_map()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.sum"><code class="docutils literal notranslate"><span class="pre">batched.sum()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.thread"><code class="docutils literal notranslate"><span class="pre">batched.thread()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.tuple_map"><code class="docutils literal notranslate"><span class="pre">batched.tuple_map()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.uf"><code class="docutils literal notranslate"><span class="pre">batched.uf</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.unflatten"><code class="docutils literal notranslate"><span class="pre">batched.unflatten()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched.unwrap"><code class="docutils literal notranslate"><span class="pre">batched.unwrap()</span></code></a></li>
 </ul>
@@ -112,11 +116,12 @@
 <li class="toctree-l1"><a class="reference internal" href="libracecar.numpyro_utils.html">libracecar.numpyro_utils module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.batched_dist"><code class="docutils literal notranslate"><span class="pre">batched_dist</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.batched_dist.cdf"><code class="docutils literal notranslate"><span class="pre">batched_dist.cdf()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.batched_dist.is_discrete"><code class="docutils literal notranslate"><span class="pre">batched_dist.is_discrete</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.batched_dist.log_prob"><code class="docutils literal notranslate"><span class="pre">batched_dist.log_prob()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.batched_dist.mean"><code class="docutils literal notranslate"><span class="pre">batched_dist.mean</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.batched_dist.sample"><code class="docutils literal notranslate"><span class="pre">batched_dist.sample()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.batched_dist.sample_with_intermediates"><code class="docutils literal notranslate"><span class="pre">batched_dist.sample_with_intermediates()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.batched_dist.support"><code class="docutils literal notranslate"><span class="pre">batched_dist.support()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.batched_dist.support"><code class="docutils literal notranslate"><span class="pre">batched_dist.support</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.numpyro_utils.html#libracecar.numpyro_utils.batched_dist.variance"><code class="docutils literal notranslate"><span class="pre">batched_dist.variance</span></code></a></li>
 </ul>
 </li>
@@ -179,13 +184,7 @@
 <li class="toctree-l2"><a class="reference internal" href="libracecar.ros_utils.html#libracecar.ros_utils.time_msg_to_float"><code class="docutils literal notranslate"><span class="pre">time_msg_to_float()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="libracecar.sandbox.html">libracecar.sandbox module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="libracecar.sandbox.html#libracecar.sandbox.isolate"><code class="docutils literal notranslate"><span class="pre">isolate()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="libracecar.sandbox.html#libracecar.sandbox.mount"><code class="docutils literal notranslate"><span class="pre">mount()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="libracecar.sandbox.html#libracecar.sandbox.run_isolated"><code class="docutils literal notranslate"><span class="pre">run_isolated()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="libracecar.sandbox.html#libracecar.sandbox.setup_isolation"><code class="docutils literal notranslate"><span class="pre">setup_isolation()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="libracecar.sandbox.html">libracecar.sandbox module</a></li>
 <li class="toctree-l1"><a class="reference internal" href="libracecar.specs.html">libracecar.specs module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="libracecar.specs.html#libracecar.specs.position"><code class="docutils literal notranslate"><span class="pre">position</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.specs.html#libracecar.specs.position.as_arr"><code class="docutils literal notranslate"><span class="pre">position.as_arr()</span></code></a></li>
@@ -286,6 +285,7 @@
 <li class="toctree-l3"><a class="reference internal" href="libracecar.vector.html#libracecar.vector.vec.conj"><code class="docutils literal notranslate"><span class="pre">vec.conj()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.vector.html#libracecar.vector.vec.create"><code class="docutils literal notranslate"><span class="pre">vec.create()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.vector.html#libracecar.vector.vec.from_arr"><code class="docutils literal notranslate"><span class="pre">vec.from_arr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="libracecar.vector.html#libracecar.vector.vec.normalize"><code class="docutils literal notranslate"><span class="pre">vec.normalize()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.vector.html#libracecar.vector.vec.plot"><code class="docutils literal notranslate"><span class="pre">vec.plot()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.vector.html#libracecar.vector.vec.which_side"><code class="docutils literal notranslate"><span class="pre">vec.which_side()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="libracecar.vector.html#libracecar.vector.vec.x"><code class="docutils literal notranslate"><span class="pre">vec.x</span></code></a></li>
