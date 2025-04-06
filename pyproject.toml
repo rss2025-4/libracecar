@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "libracecar"
-version = "0.0.1"
+version = "0.0.2"
 
 [tool.poetry.dependencies]
 python = ">=3.10, <3.13"
