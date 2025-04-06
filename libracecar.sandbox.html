@@ -33,8 +33,152 @@
 
           <div class="body" role="main">
             
-  <section id="libracecar-sandbox-module">
-<h1>libracecar.sandbox module<a class="headerlink" href="#libracecar-sandbox-module" title="Link to this heading">¶</a></h1>
+  <section id="module-libracecar.sandbox">
+<span id="libracecar-sandbox-module"></span><h1>libracecar.sandbox module<a class="headerlink" href="#module-libracecar.sandbox" title="Link to this heading">¶</a></h1>
+<p>ROS uses network to communicate between nodes, in a distributed fashion.</p>
+<p>This module aims to run some ros nodes in an isolated fasion. It makes sure:</p>
+<ol class="arabic simple">
+<li><p>isolated ros nodes does not see nodes running outside isolation</p></li>
+<li><p>isloated ros nodes are always killed when we finish</p></li>
+</ol>
+<p>This modules uses linux namespaces to do isolation;
+You can read more about that <a class="reference external" href="https://thomasvanlaere.com/posts/2020/12/exploring-containers-part-3/">here</a>
+(disclaimer: found on google, didnt read myself)</p>
+<p>the main entrypoint of the module is <code class="docutils literal notranslate"><span class="pre">isolate</span></code>.
+Here is an example of running bash under isolate:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">libracecar.sandbox</span><span class="w"> </span><span class="kn">import</span> <span class="n">isolate</span>
+
+<span class="nd">@isolate</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;bash -i&quot;</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;finished!&quot;</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="n">main</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;finished!&quot;</span>
+</pre></div>
+</div>
+<p>if you run <code class="docutils literal notranslate"><span class="pre">ros2</span> <span class="pre">topic</span> <span class="pre">list</span></code> under this bash session,
+you will find that nodes outside isolation is not visible.</p>
+<p>here is a more complete example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">libracecar.sandbox</span><span class="w"> </span><span class="kn">import</span> <span class="n">isolate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">libracecar.test_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">proc_manager</span>
+
+
+<span class="c1"># indicate success with an exception</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_ok</span><span class="p">(</span><span class="ne">BaseException</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">wait_time</span><span class="p">():</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="n">_ok</span><span class="p">()</span>
+
+
+<span class="nd">@isolate</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">procs</span> <span class="o">=</span> <span class="n">proc_manager</span><span class="o">.</span><span class="n">new</span><span class="p">()</span>
+
+    <span class="c1"># run some stuff</span>
+    <span class="n">procs</span><span class="o">.</span><span class="n">popen</span><span class="p">([</span><span class="s2">&quot;rviz2&quot;</span><span class="p">])</span>
+    <span class="n">procs</span><span class="o">.</span><span class="n">ros_launch</span><span class="p">(</span><span class="s2">&quot;racecar_simulator&quot;</span><span class="p">,</span> <span class="s2">&quot;simulate.launch.xml&quot;</span><span class="p">)</span>
+    <span class="n">procs</span><span class="o">.</span><span class="n">thread</span><span class="p">(</span><span class="n">wait_time</span><span class="p">)</span>
+
+    <span class="c1"># run some gui apps so that you can inspect what is happening in a subshell</span>
+    <span class="c1"># only tested with emacs</span>
+    <span class="n">procs</span><span class="o">.</span><span class="n">popen</span><span class="p">([</span><span class="s2">&quot;emacs&quot;</span><span class="p">])</span>
+
+    <span class="c1"># wait until anything fails/throws, then fail</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">procs</span><span class="o">.</span><span class="n">spin</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">_ok</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;success!&quot;</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>it appears that pytest can access local varaibles under <code class="docutils literal notranslate"><span class="pre">isolate</span></code>; i have no idea why this works though.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">libracecar.sandbox</span><span class="w"> </span><span class="kn">import</span> <span class="n">isolate</span>
+
+<span class="nd">@isolate</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_me</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>========================================================== FAILURES ==========================================================
+__________________________________________________________ test_me ___________________________________________________________
+
+E   AssertionError: (from &lt;function test_me at 0x7f355e9e0e50&gt; under isolate):
+    assert 2 &lt; 0
+</pre></div>
+</div>
+<p>known problems:</p>
+<p>type of exception is not kept; instead an exception with the same name is thrown.</p>
+<p>i have been unable to make this work under github actions</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="libracecar.sandbox.isolate">
+<span class="sig-prename descclassname"><span class="pre">libracecar.sandbox.</span></span><span class="sig-name descname"><span class="pre">isolate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/sandbox.html#isolate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.sandbox.isolate" title="Link to this definition">¶</a></dt>
+<dd><p>runs <code class="docutils literal notranslate"><span class="pre">f</span></code> in its own linux namespace.</p>
+<p>Propagates return value and exceptions.</p>
+<p>The return type <code class="docutils literal notranslate"><span class="pre">R</span></code> is required to be pickleable.</p>
+<p>Type of Exception is NOT kept; instead an exception with the same name is thrown.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>f</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">ParamSpec</span></code>(<code class="docutils literal notranslate"><span class="pre">P</span></code>)], <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">R</span></code>)]</span>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">ParamSpec</span></code>(<code class="docutils literal notranslate"><span class="pre">P</span></code>)], <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">R</span></code>)]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="libracecar.sandbox.mount">
+<span class="sig-prename descclassname"><span class="pre">libracecar.sandbox.</span></span><span class="sig-name descname"><span class="pre">mount</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/sandbox.html#mount"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.sandbox.mount" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>)</p></li>
+<li><p><strong>target</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>)</p></li>
+<li><p><strong>fs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="libracecar.sandbox.run_isolated">
+<span class="sig-prename descclassname"><span class="pre">libracecar.sandbox.</span></span><span class="sig-name descname"><span class="pre">run_isolated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/sandbox.html#run_isolated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.sandbox.run_isolated" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>f</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">ParamSpec</span></code>(<code class="docutils literal notranslate"><span class="pre">P</span></code>)], <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">R</span></code>)]</span>)</p></li>
+<li><p><strong>args</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParamSpecArgs</span></code></span>)</p></li>
+<li><p><strong>kwargs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParamSpecKwargs</span></code></span>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">R</span></code>)</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="libracecar.sandbox.setup_isolation">
+<span class="sig-prename descclassname"><span class="pre">libracecar.sandbox.</span></span><span class="sig-name descname"><span class="pre">setup_isolation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/sandbox.html#setup_isolation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.sandbox.setup_isolation" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
 
