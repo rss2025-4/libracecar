@@ -75,6 +75,21 @@ test-tox = ["click", "equinox ; sys_platform == \"linux\"", "jax[cpu] ; sys_plat
 test-tox-coverage = ["coverage (>=5.5)"]
 
 [[package]]
+name = "better-exceptions"
+version = "0.3.3"
+description = "Pretty and helpful exceptions, automatically"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "better_exceptions-0.3.3-py3-none-any.whl", hash = "sha256:9c70b1c61d5a179b84cd2c9d62c3324b667d74286207343645ed4306fdaad976"},
+    {file = "better_exceptions-0.3.3.tar.gz", hash = "sha256:e4e6bc18444d5f04e6e894b10381e5e921d3d544240418162c7db57e9eb3453b"},
+]
+
+[package.dependencies]
+colorama = {version = "*", markers = "sys_platform == \"win32\""}
+
+[[package]]
 name = "certifi"
 version = "2025.1.31"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -2176,4 +2191,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <3.13"
-content-hash = "1ccaa8d7be5d12379379ffe134e8ee932e2153ad458a4565ba13f1d1f184d0d1"
+content-hash = "dbe60c61aac9652652149bca9100ab28b4c377e7a5e826514420aae028b0c764"

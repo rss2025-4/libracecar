@@ -23,6 +23,7 @@ transforms3d = "^0.4.2"
 typeguard = "^4.4.2"
 unshare = "^0.22"
 numpy = "==1.*"
+better-exceptions = "^0.3.3"
 
 [tool.poetry.group.gpu]
 optional = true
