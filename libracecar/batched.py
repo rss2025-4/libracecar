@@ -46,8 +46,11 @@ T3 = TypeVar("T3")
 T1_tup = TypeVarTuple("T1_tup")
 
 
-def _remove_prefix(v: tuple[int, ...], prefix: tuple[int, ...]) -> tuple[int, ...]:
-    assert v[: len(prefix)] == prefix
+def _remove_prefix(
+    v: tuple[int, ...], prefix: tuple[int, ...], check: bool = False
+) -> tuple[int, ...]:
+    if check:
+        assert v[: len(prefix)] == prefix
     return v[len(prefix) :]
 
 
@@ -82,22 +85,30 @@ class batched(eqx.Module, Generic[T_co]):
     _tracking: Array | None = None
 
     @staticmethod
-    def create(val: T2, batch_dims: tuple[int, ...] = ()) -> batched[T2]:
+    def create(
+        val: T2, batch_dims: tuple[int, ...] = (), *, broadcast: bool = False
+    ) -> batched[T2]:
         bufs, tree = jtu.tree_flatten(val)
         if len(bufs) == 0:
             return batched([], [], tree, jnp.zeros(batch_dims))
 
-        _bufs: list[Array] = []
-        _shapes: list[ShapeDtypeStruct] = []
+        try:
+            _bufs: list[Array] = []
+            _shapes: list[ShapeDtypeStruct] = []
 
-        for x in bufs:
-            if not isinstance(x, Array):
-                x = jnp.array(x)
-            _bufs.append(x)
-            _shapes.append(
-                ShapeDtypeStruct(_remove_prefix(x.shape, batch_dims), x.dtype)
-            )
-        return batched(_bufs, _shapes, tree)
+            for x in bufs:
+                if not isinstance(x, Array):
+                    x = jnp.array(x)
+                shape = _remove_prefix(x.shape, batch_dims, check=not broadcast)
+                _shapes.append(ShapeDtypeStruct(shape, x.dtype))
+                if broadcast:
+                    x, _ = jnp.broadcast_arrays(x, jnp.zeros(batch_dims + shape))
+                    assert x.shape == batch_dims + shape
+                _bufs.append(x)
+
+            return batched(_bufs, _shapes, tree)
+        except Exception as e:
+            raise Exception(f"failed to create batched: {batch_dims}\n{val}") from e
 
     def batch_dims(self) -> tuple[int, ...]:
         if self._tracking is not None:
@@ -114,6 +125,10 @@ class batched(eqx.Module, Generic[T_co]):
 
     def unflatten(self) -> T_co:
         return jtu.tree_unflatten(self._pytree, self._bufs)
+
+    @property
+    def uf(self):
+        return self.unflatten()
 
     def unwrap(self) -> T_co:
         assert self.batch_dims() == ()
@@ -151,6 +166,7 @@ class batched(eqx.Module, Generic[T_co]):
     stack = staticmethod(_batched_treemap_of(jnp.stack))
     roll = _batched_treemap_of_one(jnp.roll)
     mean = _batched_treemap_of_one(jnp.mean)
+    sum = _batched_treemap_of_one(jnp.sum)
 
     def __getitem__(self, idx: Any) -> batched[T_co]:
         return batched_treemap(lambda x: x[idx], self)
@@ -273,6 +289,34 @@ class batched(eqx.Module, Generic[T_co]):
         f_ = cast_unchecked["Callable[[T_co, *tuple[ival, ...]], R]"]()(f)
         idxs = self.all_idxs()
         return batched_zip(self, idxs).tuple_map(lambda v, idx: f_(v, *idx))
+
+    def split_batch_dims(
+        self,
+        *,
+        outer: tuple[int, ...] | None = None,
+        inner: tuple[int, ...] | None = None,
+    ) -> batched[batched[T_co]]:
+        assert not inner is None and outer is None
+        bds = self.batch_dims()
+
+        if inner is None:
+            inner = bds[len(outer) :]
+        if outer is None:
+            outer = bds[: -len(inner)]
+
+        assert bds == outer + inner
+        return batched.create(self, outer)
+
+    def sort(self, key: Callable[[T_co], Array]):
+        def inner(v: T_co):
+            ans = key(v)
+            assert isinstance(ans, Array)
+            assert ans.shape == ()
+            return ans
+
+        keys = self.map(inner)
+        sorted_indices = jnp.argsort(keys.uf)
+        return self[sorted_indices]
 
 
 @overload

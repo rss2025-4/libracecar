@@ -71,6 +71,7 @@ class jax_jit_dispatcher(Generic[T]):
         with timer.create() as t:
             comp = lowered.compile()
             print(f"took {t.val}s")
+            print(comp.cost_analysis())
 
         def thread_fn():
             _ = comp()

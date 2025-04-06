@@ -22,6 +22,9 @@ class vec(eqx.Module):
     def conj(self):
         return vec(self._v.conj())
 
+    def normalize(self) -> "unitvec":
+        return unitvec(self._v / jnp.abs(self._v))
+
     @staticmethod
     def create(x: flike, y: flike):
         x = jnp.array(x, dtype=np.float32)

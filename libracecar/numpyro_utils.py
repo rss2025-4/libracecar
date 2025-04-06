@@ -122,14 +122,19 @@ class batched_dist(Distribution):
         return batched_vmap(
             lambda me, v: me.log_prob(v),
             self._wrapped,
-            batched.create(value, self.batch_shape),
+            batched.create(value, self.batch_shape, broadcast=True),
         ).unflatten()
 
+    @property
     def support(self):
         return self._wrapped.static_map(lambda x: x.support)
 
+    @property
+    def is_discrete(self):
+        return self._wrapped.static_map(lambda x: x.is_discrete)
 
-def normal_(loc: flike, scale: flike) -> dist.Normal:
+
+def normal_(loc: flike, scale: flike) -> dist.Distribution:
     return dist.Normal(loc=cast_unchecked_(loc), scale=cast_unchecked_(scale))
 
 

@@ -114,6 +114,7 @@ from pathlib import Path
 from typing import Any, Callable, ParamSpec, TypeVar
 
 import unshare
+from better_exceptions import excepthook
 from pyroute2 import IPRoute
 
 P = ParamSpec("P")
@@ -187,7 +188,8 @@ def _run_user_fn(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwargs)
         ans = f(*args, **kwargs)
         q.put_nowait(_subproc_ret_ok(ans))
     except BaseException as e:
-        traceback.print_exc()
+        exc_type, exc_value, exc_tb = sys.exc_info()
+        excepthook(exc_type, exc_value, exc_tb)
         q.put_nowait(_subproc_err(type(e), str(e)))
 
 
