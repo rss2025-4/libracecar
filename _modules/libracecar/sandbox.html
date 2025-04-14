@@ -197,7 +197,7 @@
     <span class="c1"># Path(&quot;/proc/self/setgroups&quot;).write_text(f&quot;deny&quot;)</span>
     <span class="c1"># Path(&quot;/proc/self/gid_map&quot;).write_text(f&quot;{gid} {gid} 1\n&quot;)</span>
 
-    <span class="n">mount</span><span class="p">(</span><span class="s2">&quot;tmpfs&quot;</span><span class="p">,</span> <span class="s2">&quot;/dev/shm&quot;</span><span class="p">,</span> <span class="s2">&quot;tmpfs&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="c1"># mount(&quot;tmpfs&quot;, &quot;/dev/shm&quot;, &quot;tmpfs&quot;, &quot;&quot;)</span>
 
     <span class="n">ip</span> <span class="o">=</span> <span class="n">IPRoute</span><span class="p">()</span>
     <span class="n">idxs</span> <span class="o">=</span> <span class="n">ip</span><span class="o">.</span><span class="n">link_lookup</span><span class="p">(</span><span class="n">ifname</span><span class="o">=</span><span class="s2">&quot;lo&quot;</span><span class="p">)</span>
@@ -258,6 +258,8 @@
     <span class="c1">#   exits with 0 if pushed, otherwise nonzero</span>
     <span class="c1"># promises:</span>
     <span class="c1">#   exit 0 imply value pushed</span>
+
+    <span class="n">mount</span><span class="p">(</span><span class="s2">&quot;tmpfs&quot;</span><span class="p">,</span> <span class="s2">&quot;/dev/shm&quot;</span><span class="p">,</span> <span class="s2">&quot;tmpfs&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
 
     <span class="c1"># nvidia gpus wants to have the &quot;right&quot; /proc</span>
     <span class="n">mount</span><span class="p">(</span><span class="s2">&quot;proc&quot;</span><span class="p">,</span> <span class="s2">&quot;/proc&quot;</span><span class="p">,</span> <span class="s2">&quot;proc&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
