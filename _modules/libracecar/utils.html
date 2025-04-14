@@ -56,7 +56,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">lax</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">tree_util</span> <span class="k">as</span> <span class="n">jtu</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">jax.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tracer</span><span class="p">,</span> <span class="n">eval_jaxpr</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">eval_jaxpr</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax.experimental</span><span class="w"> </span><span class="kn">import</span> <span class="n">io_callback</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Bool</span><span class="p">,</span> <span class="n">Complex64</span><span class="p">,</span> <span class="n">Float</span><span class="p">,</span> <span class="n">Int</span><span class="p">,</span> <span class="n">Int32</span>
 
@@ -198,13 +198,25 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_pformat_tuple</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pp</span><span class="o">.</span><span class="n">Doc</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">objs</span> <span class="o">=</span> <span class="p">[</span><span class="n">pp</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">pretty_print</span><span class="p">(</span><span class="n">obj</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">pp</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)])]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">objs</span> <span class="o">=</span> <span class="p">[</span><span class="n">pretty_print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">bracketed</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">objs</span><span class="o">=</span><span class="n">objs</span><span class="p">,</span> <span class="n">lbracket</span><span class="o">=</span><span class="s2">&quot;(&quot;</span><span class="p">,</span> <span class="n">rbracket</span><span class="o">=</span><span class="s2">&quot;)&quot;</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="pretty_print">
 <a class="viewcode-back" href="../../libracecar.utils.html#libracecar.utils.pretty_print">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">pretty_print</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pp</span><span class="o">.</span><span class="n">Doc</span><span class="p">:</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pp</span><span class="o">.</span><span class="n">Doc</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">x</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Tracer</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">_pretty_print</span><span class="p">()</span>
+    <span class="c1"># if isinstance(x, Tracer):</span>
+    <span class="c1">#     return x._pretty_print()</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_pformat_tuple</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Array</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">pp_nested</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="o">*</span><span class="nb">repr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">())</span>
     <span class="k">return</span> <span class="n">pp_join</span><span class="p">(</span><span class="o">*</span><span class="nb">repr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">())</span></div>
 
 
@@ -366,7 +378,8 @@
     <span class="n">pred_</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
     <span class="n">bufs_true</span><span class="p">,</span> <span class="n">tree1</span> <span class="o">=</span> <span class="n">jtu</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">on_true</span><span class="p">)</span>
     <span class="n">bufs_false</span><span class="p">,</span> <span class="n">tree2</span> <span class="o">=</span> <span class="n">jtu</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">on_false</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">tree1</span> <span class="o">==</span> <span class="n">tree2</span>
+    <span class="k">if</span> <span class="n">tree1</span> <span class="o">!=</span> <span class="n">tree2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;tree mismatch: </span><span class="si">{</span><span class="n">tree1</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">tree2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">out_bufs</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">x</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="n">y</span> <span class="k">else</span> <span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">pred_</span><span class="p">,</span> <span class="n">on_true</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">on_false</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bufs_true</span><span class="p">,</span> <span class="n">bufs_false</span><span class="p">)</span>
@@ -433,7 +446,7 @@
 
 <div class="viewcode-block" id="round_clip">
 <a class="viewcode-back" href="../../libracecar.utils.html#libracecar.utils.round_clip">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">round_clip</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">flike</span><span class="p">,</span> <span class="nb">min</span><span class="p">:</span> <span class="n">ilike</span><span class="p">,</span> <span class="nb">max</span><span class="p">:</span> <span class="n">ilike</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">round_clip</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">flike</span><span class="p">,</span> <span class="nb">min</span><span class="p">:</span> <span class="n">ilike</span><span class="p">,</span> <span class="nb">max</span><span class="p">:</span> <span class="n">ilike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ival</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span> <span class="nb">min</span><span class="o">=</span><span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="nb">max</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span></div>
 
 
@@ -538,6 +551,18 @@
 
 
 <span class="n">lazylike</span> <span class="o">=</span> <span class="n">lazy</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="n">T</span>
+
+<span class="n">_old_print</span> <span class="o">=</span> <span class="nb">print</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_wrap_print</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inner</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_old_print</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cast_unchecked_</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
+
+
+<span class="nb">print</span> <span class="o">=</span> <span class="n">_wrap_print</span><span class="p">(</span><span class="nb">print</span><span class="p">)</span>
 </pre></div>
 
           </div>

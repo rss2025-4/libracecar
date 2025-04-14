@@ -35,7 +35,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">lax</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">jnp</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Complex64</span><span class="p">,</span> <span class="n">Float</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jaxtyping</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">Float</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.plot</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_point</span><span class="p">,</span> <span class="n">plot_style</span><span class="p">,</span> <span class="n">plotable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">bval</span><span class="p">,</span> <span class="n">flike</span><span class="p">,</span> <span class="n">fval</span><span class="p">,</span> <span class="n">jit</span><span class="p">,</span> <span class="n">pformat_repr</span>
@@ -44,7 +44,7 @@
 <div class="viewcode-block" id="vec">
 <a class="viewcode-back" href="../../libracecar.vector.html#libracecar.vector.vec">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">vec</span><span class="p">(</span><span class="n">eqx</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-    <span class="n">_v</span><span class="p">:</span> <span class="n">Complex64</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]</span>
+    <span class="n">_v</span><span class="p">:</span> <span class="n">Array</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">x</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

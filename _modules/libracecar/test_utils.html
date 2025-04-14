@@ -40,15 +40,33 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">multiprocessing.process</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseProcess</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">threading</span><span class="w"> </span><span class="kn">import</span> <span class="n">Thread</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">ParamSpec</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">ParamSpec</span><span class="p">,</span>
+    <span class="n">Protocol</span><span class="p">,</span>
+    <span class="n">TypeVar</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">rclpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rclpy.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rclpy.executors</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleThreadedExecutor</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">rclpy.node</span><span class="w"> </span><span class="kn">import</span> <span class="n">Node</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">rclpy.qos</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">QoSDurabilityPolicy</span><span class="p">,</span>
+    <span class="n">QoSHistoryPolicy</span><span class="p">,</span>
+    <span class="n">QoSProfile</span><span class="p">,</span>
+    <span class="n">QoSReliabilityPolicy</span><span class="p">,</span>
+<span class="p">)</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">PropagatingThread</span><span class="p">,</span> <span class="n">cast_unchecked</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">libracecar.sandbox</span><span class="w"> </span><span class="kn">import</span> <span class="n">throw</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">PropagatingThread</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">cast_unchecked</span>
 
 <span class="n">P</span> <span class="o">=</span> <span class="n">ParamSpec</span><span class="p">(</span><span class="s2">&quot;P&quot;</span><span class="p">)</span>
 <span class="n">R</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;R&quot;</span><span class="p">)</span>
+
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_poll</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
@@ -83,8 +101,18 @@
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">exc</span>
 
 
+<div class="viewcode-block" id="rclpy_init">
+<a class="viewcode-back" href="../../libracecar.test_utils.html#libracecar.test_utils.rclpy_init">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rclpy_init</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">rclpy</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+        <span class="k">pass</span></div>
+
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_run_node</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">Node</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="n">rclpy</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+    <span class="n">rclpy_init</span><span class="p">()</span>
     <span class="n">rclpy</span><span class="o">.</span><span class="n">spin</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
     <span class="n">rclpy</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
 
@@ -130,7 +158,7 @@
 <div class="viewcode-block" id="proc_manager.thread">
 <a class="viewcode-back" href="../../libracecar.test_utils.html#libracecar.test_utils.proc_manager.thread">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Thread</span><span class="p">:</span>
-        <span class="n">t</span> <span class="o">=</span> <span class="n">PropagatingThread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">PropagatingThread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_thread</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">t</span></div>
@@ -188,11 +216,85 @@
 <div class="viewcode-block" id="proc_manager.spin">
 <a class="viewcode-back" href="../../libracecar.test_utils.html#libracecar.test_utils.proc_manager.spin">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">spin</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">:</span>
-                <span class="n">x</span><span class="o">.</span><span class="n">poll</span><span class="p">()</span>
-            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span></div>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parts</span><span class="p">:</span>
+                    <span class="n">x</span><span class="o">.</span><span class="n">poll</span><span class="p">()</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">throw</span><span class="p">(</span><span class="n">e</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="proc_manager.spin_thread">
+<a class="viewcode-back" href="../../libracecar.test_utils.html#libracecar.test_utils.proc_manager.spin_thread">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">spin_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spin</span><span class="p">)</span></div>
 </div>
+
+
+
+<div class="viewcode-block" id="write_topic">
+<a class="viewcode-back" href="../../libracecar.test_utils.html#libracecar.test_utils.write_topic">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_topic</span><span class="p">(</span><span class="n">topic_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+
+    <span class="n">rclpy_init</span><span class="p">()</span>
+
+    <span class="n">node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">write_topic</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">publisher</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">create_publisher</span><span class="p">(</span>
+        <span class="nb">type</span><span class="p">(</span><span class="n">msg</span><span class="p">),</span>
+        <span class="n">topic_name</span><span class="p">,</span>
+        <span class="n">qos_profile</span><span class="o">=</span><span class="n">QoSProfile</span><span class="p">(</span>
+            <span class="n">reliability</span><span class="o">=</span><span class="n">QoSReliabilityPolicy</span><span class="o">.</span><span class="n">RELIABLE</span><span class="p">,</span>
+            <span class="n">history</span><span class="o">=</span><span class="n">QoSHistoryPolicy</span><span class="o">.</span><span class="n">KEEP_LAST</span><span class="p">,</span>
+            <span class="n">depth</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">durability</span><span class="o">=</span><span class="n">QoSDurabilityPolicy</span><span class="o">.</span><span class="n">TRANSIENT_LOCAL</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">publisher</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">node</span><span class="o">.</span><span class="n">destroy_node</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="read_topic">
+<a class="viewcode-back" href="../../libracecar.test_utils.html#libracecar.test_utils.read_topic">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_topic</span><span class="p">(</span><span class="n">topic</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tp</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="n">Context</span><span class="p">()</span>
+    <span class="n">context</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">Node</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">read_topic</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+
+        <span class="n">ans</span> <span class="o">=</span> <span class="n">cast</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">],</span> <span class="kc">None</span><span class="p">]]()(</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">callback</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="n">T</span><span class="p">):</span>
+            <span class="k">nonlocal</span> <span class="n">ans</span>
+            <span class="n">ans</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span><span class="p">,)</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">destroy_node</span><span class="p">()</span>
+
+        <span class="n">node</span><span class="o">.</span><span class="n">create_subscription</span><span class="p">(</span>
+            <span class="n">msg_type</span><span class="o">=</span><span class="n">tp</span><span class="p">,</span>
+            <span class="n">topic</span><span class="o">=</span><span class="n">topic</span><span class="p">,</span>
+            <span class="n">callback</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>
+            <span class="n">qos_profile</span><span class="o">=</span><span class="n">QoSProfile</span><span class="p">(</span>
+                <span class="n">reliability</span><span class="o">=</span><span class="n">QoSReliabilityPolicy</span><span class="o">.</span><span class="n">RELIABLE</span><span class="p">,</span>
+                <span class="n">history</span><span class="o">=</span><span class="n">QoSHistoryPolicy</span><span class="o">.</span><span class="n">KEEP_LAST</span><span class="p">,</span>
+                <span class="n">depth</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                <span class="n">durability</span><span class="o">=</span><span class="n">QoSDurabilityPolicy</span><span class="o">.</span><span class="n">TRANSIENT_LOCAL</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="n">executor</span> <span class="o">=</span> <span class="n">SingleThreadedExecutor</span><span class="p">(</span><span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+        <span class="n">executor</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="n">ans</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">executor</span><span class="o">.</span><span class="n">spin_once</span><span class="p">()</span>
+
+        <span class="n">node</span><span class="o">.</span><span class="n">destroy_node</span><span class="p">()</span>
+        <span class="p">(</span><span class="n">ans_</span><span class="p">,)</span> <span class="o">=</span> <span class="n">ans</span>
+        <span class="k">return</span> <span class="n">ans_</span>
+
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span></div>
 
 </pre></div>
 

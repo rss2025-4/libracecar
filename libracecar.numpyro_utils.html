@@ -87,6 +87,11 @@
 <dd><p>Mean of the distribution.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="libracecar.numpyro_utils.batched_dist.pytree_data_fields">
+<span class="sig-name descname"><span class="pre">pytree_data_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('_wrapped',)</span></em><a class="headerlink" href="#libracecar.numpyro_utils.batched_dist.pytree_data_fields" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="libracecar.numpyro_utils.batched_dist.sample">
 <span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/numpyro_utils.html#batched_dist.sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.numpyro_utils.batched_dist.sample" title="Link to this definition">¶</a></dt>
@@ -174,6 +179,19 @@ returned (useful for <cite>TransformedDistribution</cite>).</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="libracecar.numpyro_utils.mixturesamefamily_">
+<span class="sig-prename descclassname"><span class="pre">libracecar.numpyro_utils.</span></span><span class="sig-name descname"><span class="pre">mixturesamefamily_</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts_with_logits</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/numpyro_utils.html#mixturesamefamily_"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.numpyro_utils.mixturesamefamily_" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parts_with_logits</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="libracecar.batched.html#libracecar.batched.batched" title="libracecar.batched.batched"><code class="xref py py-class docutils literal notranslate"><span class="pre">batched</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Distribution</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Float[Array,</span> <span class="pre">'']</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">Float[ndarray,</span> <span class="pre">'']</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">number</span></code> | <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]</span>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Distribution</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="libracecar.numpyro_utils.normal_">
 <span class="sig-prename descclassname"><span class="pre">libracecar.numpyro_utils.</span></span><span class="sig-name descname"><span class="pre">normal_</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/numpyro_utils.html#normal_"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.numpyro_utils.normal_" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -202,6 +220,22 @@ returned (useful for <cite>TransformedDistribution</cite>).</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Array</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="libracecar.numpyro_utils.numpyro_scope_fn">
+<span class="sig-prename descclassname"><span class="pre">libracecar.numpyro_utils.</span></span><span class="sig-name descname"><span class="pre">numpyro_scope_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/libracecar/numpyro_utils.html#numpyro_scope_fn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#libracecar.numpyro_utils.numpyro_scope_fn" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prefix</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span>)</p></li>
+<li><p><strong>f</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[], <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">R</span></code>)]</span>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">R</span></code>)</span></p>
 </dd>
 </dl>
 </dd></dl>
