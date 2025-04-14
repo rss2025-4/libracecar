@@ -1,32 +1,35 @@
-name: Tests no docker
+name: Tests
 
 on:
   push:
   pull_request:
 
 jobs:
-  test_no_docker:
+  test:
     runs-on: ubuntu-latest
     container:
-      image: ubuntu:latest
-      options: --privileged
-    steps:
-      - name: install stuff
-        run: |
-          apt-get update -y
-          apt-get install --reinstall ca-certificates build-essential -y
+      image: sebagarc/racecar2
+      options: --privileged --user root
 
+    env:
+      PROJECT_DIR: ./src/libracecar
+
+    steps:
       # https://github.com/marketplace/actions/install-poetry-action
       #----------------------------------------------
       #       check-out repo and set-up python
       #----------------------------------------------
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Set up python
-        id: setup-python
-        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          path: ${{ env.PROJECT_DIR }}
+
+      - uses: actions/checkout@v4
+        with:
+          repository: Sebastian-Garcia/racecar_simulator
+          ref: 0e20c77dcc408c7b4babf153ef3baeadf5448ce8
+          path: src/racecar_simulator
+
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
@@ -45,19 +48,24 @@ jobs:
         id: cached-poetry-dependencies
         uses: actions/cache@v4
         with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          path: ${{ env.PROJECT_DIR }}/.venv
+          key: venv-racecardocker-${{ hashFiles('**/poetry.lock') }}
+
       #----------------------------------------------
       # install dependencies if cache does not exist
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
+        run: poetry install --no-interaction --no-root --all-extras
+        working-directory: ${{ env.PROJECT_DIR }}
+
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
       - name: Install project
-        run: poetry install --no-interaction
+        run: poetry install --no-interaction --all-extras
+        working-directory: ${{ env.PROJECT_DIR }}
+
       #----------------------------------------------
       #              run test suite
       #----------------------------------------------
@@ -65,4 +73,5 @@ jobs:
         shell: bash
         run: |
           source .venv/bin/activate
-          pytest tests/test_isolate.py
+          ./tests/run_tests_actions.sh
+        working-directory: ${{ env.PROJECT_DIR }}

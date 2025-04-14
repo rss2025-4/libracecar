@@ -1,20 +1,28 @@
-[tool.poetry]
+[project]
 name = "libracecar"
 version = "0.0.2"
+description = ""
+authors = []
+readme = "README.md"
+requires-python = ">=3.10, <3.13"
+dynamic = ["dependencies"]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.dependencies]
-python = ">=3.10, <3.13"
+
+# neccessary for ros
+catkin-pkg = "^1.0.0"
+lark = "^1.2.2"
 
 beartype = "^0.20.0"
+better-exceptions = "^0.3.3"
 colorama = "^0.4.6"
-equinox = "^0.11.12"
 ipython = "^8"
-jax = "^0.5.1"
-jaxtyping = "^0.2.38"
-lark = "^1.2.2"
 matplotlib = "^3.10.1"
-numpyro = "^0.18.0"
-optax = "^0.2.4"
+numpy = "==1.*"
 pyroute2 = "^0.8.1"
 pytest = "^8.3.5"
 pyyaml = "^6.0.2"
@@ -22,23 +30,26 @@ termcolor = "^2.5.0"
 transforms3d = "^0.4.2"
 typeguard = "^4.4.2"
 unshare = "^0.22"
-numpy = "==1.*"
-better-exceptions = "^0.3.3"
 
-[tool.poetry.group.gpu]
-optional = true
-[tool.poetry.group.gpu.dependencies]
-jax = { version = "^0.5.1", extras = ["cuda12"] }
+equinox = { version = "^0.11.12", optional = true }
+jax = { version = "^0.5.1", optional = true }
+jaxtyping = { version = "^0.2.38", optional = true }
+numpyro = { version = "^0.18.0", optional = true }
+optax = { version = "^0.2.4", optional = true }
+
+[project.optional-dependencies]
+jax = ["equinox", "jax", "jaxtyping", "numpyro", "optax"]
+
+# [tool.poetry.group.gpu]
+# optional = true
+# [tool.poetry.group.gpu.dependencies]
+# jax = { version = "^0.5.1", extras = ["cuda12"] }
 
 [tool.poetry.group.docs]
 optional = true
 [tool.poetry.group.docs.dependencies]
 sphinx = "^8"
 sphinx-autodoc-typehints = "^3"
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
 
 [tool.isort]
 profile = "black"
