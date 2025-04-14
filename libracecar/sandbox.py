@@ -245,8 +245,7 @@ def _namespace_root(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwar
     except BaseException as e:
         if p is not None and p.exitcode is not None and p.exitcode != 0:
             sys.exit(p.exitcode)
-        q.put_nowait(_subproc_err(type(e), str(e)))
-        _close_queue_and_exit(q, 0)
+        _throw(q, e)
     finally:
         os._exit(1)
 
