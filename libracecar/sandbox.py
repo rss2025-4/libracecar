@@ -142,7 +142,7 @@ def mount(source: str, target: str, fs: str, options=""):
         )
 
 
-def setup_isolation() -> None:
+def _setup_isolation_namespace_root():
     uid = os.getuid()
     gid = os.getgid()
 
@@ -155,11 +155,24 @@ def setup_isolation() -> None:
         | unshare.CLONE_NEWUSER
     )
 
-    Path("/proc/self/uid_map").write_text(f"{uid} {uid} 1\n")
+    return uid, gid
+
+
+def _setup_isolation_first_proc(uid: int, gid: int) -> None:
+
+    print("os.getuid()", os.getuid())
+    print("os.getgid()", os.getgid())
+
+    Path("/proc/self/uid_map").write_text(f"0 {uid} 1\n")
     Path("/proc/self/setgroups").write_text(f"deny")
-    Path("/proc/self/gid_map").write_text(f"{gid} {gid} 1\n")
+    Path("/proc/self/gid_map").write_text(f"0 {gid} 1\n")
+
+    # nvidia gpus wants to have the "right" /proc
+    mount("proc", "/proc", "proc", "")
 
     mount("tmpfs", "/dev/shm", "tmpfs", "")
+
+    # mount("tmpfs", "/dev/shm", "tmpfs", "")
 
     ip = IPRoute()
     idxs = ip.link_lookup(ifname="lo")
@@ -209,7 +222,14 @@ def _throw(q: Queue, e: BaseException) -> Never:
         os._exit(1)
 
 
-def _run_user_fn(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwargs):
+def _run_user_fn(
+    f: Callable[P, R],
+    uid: int,
+    gid: int,
+    q: Queue,
+    *args: P.args,
+    **kwargs: P.kwargs,
+):
     # runs f, pushes at most one value or exceptions to q
     #
     # usually:
@@ -217,13 +237,11 @@ def _run_user_fn(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwargs)
     # promises:
     #   exit 0 imply value pushed
 
-    # nvidia gpus wants to have the "right" /proc
-    mount("proc", "/proc", "proc", "")
-
     global _global_q
     _global_q = q
 
     try:
+        _setup_isolation_first_proc(uid, gid)
         __tracebackhide__ = True
         ans = f(*args, **kwargs)
         q.put_nowait(_subproc_ret_ok(ans))
@@ -237,9 +255,9 @@ def _run_user_fn(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwargs)
 def _namespace_root(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwargs):
     p = None
     try:
-        setup_isolation()
+        uid, gid = _setup_isolation_namespace_root()
         ctx = multiprocessing.get_context("fork")
-        p = ctx.Process(target=_run_user_fn, args=(f, q, *args), kwargs=kwargs)
+        p = ctx.Process(target=lambda: _run_user_fn(f, uid, gid, q, *args, **kwargs))
         p.start()
         p.join()
     except BaseException as e:
