@@ -23,7 +23,7 @@ import numpy as np
 from jax import lax
 from jax import numpy as jnp
 from jax import tree_util as jtu
-from jax.core import Tracer, eval_jaxpr
+from jax.core import eval_jaxpr
 from jax.experimental import io_callback
 from jaxtyping import Array, ArrayLike, Bool, Complex64, Float, Int, Int32
 
@@ -147,11 +147,23 @@ def debug_print(*args, **kwargs):
     debug_callback(print, *args, **kwargs)
 
 
+def _pformat_tuple(obj: tuple) -> pp.Doc:
+    if len(obj) == 1:
+        objs = [pp.concat([pretty_print(obj[0]), pp.text(",")])]
+    else:
+        objs = [pretty_print(x) for x in obj]
+    return bracketed(name=None, indent=2, objs=objs, lbracket="(", rbracket=")")
+
+
 def pretty_print(x: Any) -> pp.Doc:
     if isinstance(x, pp.Doc):
         return x
-    if isinstance(x, Tracer):
-        return x._pretty_print()
+    # if isinstance(x, Tracer):
+    #     return x._pretty_print()
+    if isinstance(x, tuple):
+        return _pformat_tuple(x)
+    if isinstance(x, Array):
+        return pp_nested("", *repr(x).splitlines())
     return pp_join(*repr(x).splitlines())
 
 
@@ -286,7 +298,8 @@ def tree_select(
     pred_ = jnp.array(pred)
     bufs_true, tree1 = jtu.tree_flatten(on_true)
     bufs_false, tree2 = jtu.tree_flatten(on_false)
-    assert tree1 == tree2
+    if tree1 != tree2:
+        raise TypeError(f"tree mismatch: {tree1} {tree2}")
     out_bufs = [
         x if x is y else lax.select(pred_, on_true=x, on_false=y)
         for x, y in zip(bufs_true, bufs_false)
@@ -332,7 +345,7 @@ def cond_(pre: blike, true_fun: Callable[[], T], false_fun: Callable[[], T]) -> 
     return lax.cond(pre, true_fun=true_fun, false_fun=false_fun)
 
 
-def round_clip(x: flike, min: ilike, max: ilike):
+def round_clip(x: flike, min: ilike, max: ilike) -> ival:
     return jnp.clip(jnp.round(x).astype(np.int32), min=min, max=max - 1)
 
 
@@ -415,3 +428,15 @@ class lazy(eqx.Module, Generic[T]):
 
 
 lazylike = lazy[T] | T
+
+_old_print = print
+
+
+def _wrap_print(x: T) -> T:
+    def inner(*args, **kwargs):
+        return _old_print(*args, **kwargs, flush=True)
+
+    return cast_unchecked_(inner)
+
+
+print = _wrap_print(print)

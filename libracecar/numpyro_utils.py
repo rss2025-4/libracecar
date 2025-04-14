@@ -36,6 +36,11 @@ def numpyro_param(
     return jnp.array(ans)
 
 
+def numpyro_scope_fn(prefix: str, f: Callable[[], R]) -> R:
+    with numpyro.handlers.scope(prefix=prefix):
+        return f()
+
+
 def vmap_seperate_seed(f: Callable[P, R], axis_size: int) -> Callable[P, R]:
 
     def inner(*args: P.args, **kwargs: P.kwargs) -> R:
@@ -76,6 +81,7 @@ def batched_vmap_with_rng(f: Callable[[T], R], a1: batched[T], /) -> batched[R]:
 class batched_dist(Distribution):
 
     _wrapped: batched[Distribution]
+    pytree_data_fields = ("_wrapped",)
 
     def __init__(self, wrapped: batched[Distribution]):
         def _check(x: Distribution):
@@ -144,3 +150,15 @@ def trunc_normal_(
     return dist.TruncatedNormal(
         loc=cast_unchecked_(loc), scale=cast_unchecked_(scale), low=low, high=high
     )
+
+
+def mixturesamefamily_(
+    parts_with_logits: batched[tuple[dist.Distribution, flike]],
+) -> dist.Distribution:
+
+    parts, weights = parts_with_logits.reshape(-1).split_tuple()
+
+    mixing_dist = dist.Categorical(logits=weights.uf)
+    assert isinstance(mixing_dist, dist.Distribution)
+
+    return dist.MixtureSameFamily(mixing_dist, batched_dist(parts))

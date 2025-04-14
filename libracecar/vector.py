@@ -2,14 +2,14 @@ import equinox as eqx
 import numpy as np
 from jax import Array, lax
 from jax import numpy as jnp
-from jaxtyping import ArrayLike, Complex64, Float
+from jaxtyping import ArrayLike, Float
 
 from .plot import plot_point, plot_style, plotable
 from .utils import bval, flike, fval, jit, pformat_repr
 
 
 class vec(eqx.Module):
-    _v: Complex64[Array, ""]
+    _v: Array
 
     @property
     def x(self):

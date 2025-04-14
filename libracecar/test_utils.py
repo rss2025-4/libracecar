@@ -7,15 +7,33 @@ from multiprocessing.context import SpawnProcess
 from multiprocessing.process import BaseProcess
 from pathlib import Path
 from threading import Thread
-from typing import Callable, ParamSpec, Protocol, TypeVar
+from typing import (
+    Callable,
+    ParamSpec,
+    Protocol,
+    TypeVar,
+    Union,
+)
 
 import rclpy
+from rclpy.context import Context
+from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
+from rclpy.qos import (
+    QoSDurabilityPolicy,
+    QoSHistoryPolicy,
+    QoSProfile,
+    QoSReliabilityPolicy,
+)
 
-from .utils import PropagatingThread, cast_unchecked
+from libracecar.sandbox import throw
+
+from .utils import PropagatingThread, cast, cast_unchecked
 
 P = ParamSpec("P")
 R = TypeVar("R")
+
+T = TypeVar("T")
 
 
 class _poll(Protocol):
@@ -50,8 +68,15 @@ class _thread:
             raise self.t.exc
 
 
+def rclpy_init():
+    try:
+        rclpy.init()
+    except RuntimeError:
+        pass
+
+
 def _run_node(f: Callable[P, Node], *args: P.args, **kwargs: P.kwargs):
-    rclpy.init()
+    rclpy_init()
     rclpy.spin(f(*args, **kwargs))
     rclpy.shutdown()
 
@@ -87,7 +112,7 @@ class proc_manager:
         return p
 
     def thread(self, f: Callable[P, None], *args: P.args, **kwargs: P.kwargs) -> Thread:
-        t = PropagatingThread(target=f, args=args, kwargs=kwargs)
+        t = PropagatingThread(target=f, args=args, kwargs=kwargs, daemon=True)
         t.start()
         self._parts.append(_thread(t))
         return t
@@ -130,7 +155,72 @@ class proc_manager:
         return self.thread(_run_node, node_t, *args, **kwargs)
 
     def spin(self):
-        while True:
-            for x in self._parts:
-                x.poll()
-            time.sleep(0.1)
+        try:
+            while True:
+                for x in self._parts:
+                    x.poll()
+                time.sleep(0.1)
+        except BaseException as e:
+            throw(e)
+
+    def spin_thread(self):
+        self.thread(self.spin)
+
+
+def write_topic(topic_name: str, msg):
+
+    rclpy_init()
+
+    node = Node(f"{write_topic.__qualname__}")
+    publisher = node.create_publisher(
+        type(msg),
+        topic_name,
+        qos_profile=QoSProfile(
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+        ),
+    )
+    publisher.publish(msg)
+    node.destroy_node()
+
+
+def read_topic(topic: str, tp: type[T]) -> T:
+    context = Context()
+    context.init(args=None)
+
+    try:
+        node = Node(f"{read_topic.__qualname__}", context=context)
+
+        ans = cast[Union[tuple[T], None]]()(None)
+
+        def callback(v: T):
+            nonlocal ans
+            ans = (v,)
+            node.destroy_node()
+
+        node.create_subscription(
+            msg_type=tp,
+            topic=topic,
+            callback=callback,
+            qos_profile=QoSProfile(
+                reliability=QoSReliabilityPolicy.RELIABLE,
+                history=QoSHistoryPolicy.KEEP_LAST,
+                depth=10,
+                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+            ),
+        )
+
+        executor = SingleThreadedExecutor(context=context)
+        executor.add_node(node)
+
+        while ans is None:
+            executor.spin_once()
+
+        node.destroy_node()
+        (ans_,) = ans
+        return ans_
+
+    finally:
+        context.shutdown()

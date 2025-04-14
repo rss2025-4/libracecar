@@ -9,10 +9,7 @@ from jax import tree_util as jtu
 
 from .utils import (
     PropagatingThread,
-    cast,
     cond_,
-    debug_callback,
-    debug_print,
     flike,
     fval,
     io_callback_,

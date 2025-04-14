@@ -107,15 +107,16 @@ import inspect
 import multiprocessing
 import os
 import sys
-import traceback
 from dataclasses import dataclass
 from multiprocessing import Queue
 from pathlib import Path
-from typing import Any, Callable, ParamSpec, TypeVar
+from queue import Empty
+from typing import Any, Callable, ParamSpec, TypeVar, Union
 
 import unshare
-from better_exceptions import excepthook
+from better_exceptions import format_exception
 from pyroute2 import IPRoute
+from typing_extensions import Never
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -177,35 +178,77 @@ class _subproc_err:
     _str: str
 
 
+def _close_queue_and_exit(q: Queue, code: int) -> Never:
+    q.close()
+    q.join_thread()
+    os._exit(code)
+
+
+_global_q: Union[Queue, None] = None
+
+
+def throw(e: BaseException) -> Never:
+    assert _global_q is not None
+    return _throw(_global_q, e)
+
+
+def _throw(q: Queue, e: BaseException) -> Never:
+    try:
+        # exc_type, exc_value, exc_tb = sys.exc_info()
+        exc_type, exc_value, exc_tb = type(e), e, e.__traceback__
+        ex_fmt = "".join(format_exception(exc_type, exc_value, exc_tb))
+        sys.stderr.write(ex_fmt)
+        sys.stderr.flush()
+
+        q.put_nowait(_subproc_err(type(e), str(e)))
+        _close_queue_and_exit(q, 0)
+    except BaseException as e2:
+        sys.stderr.write(f"_run_user_fn: failed during exception handling: {e2}")
+        sys.stdout.flush()
+    finally:
+        os._exit(1)
+
+
 def _run_user_fn(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwargs):
-    # runs f, and push exception string or return value into a queue
+    # runs f, pushes at most one value or exceptions to q
+    #
+    # usually:
+    #   exits with 0 if pushed, otherwise nonzero
+    # promises:
+    #   exit 0 imply value pushed
 
     # nvidia gpus wants to have the "right" /proc
     mount("proc", "/proc", "proc", "")
+
+    global _global_q
+    _global_q = q
 
     try:
         __tracebackhide__ = True
         ans = f(*args, **kwargs)
         q.put_nowait(_subproc_ret_ok(ans))
+        _close_queue_and_exit(q, 0)
     except BaseException as e:
-        exc_type, exc_value, exc_tb = sys.exc_info()
-        excepthook(exc_type, exc_value, exc_tb)
-        q.put_nowait(_subproc_err(type(e), str(e)))
+        _throw(q, e)
+    finally:
+        os._exit(1)
 
 
 def _namespace_root(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwargs):
-    setup_isolation()
-    ctx = multiprocessing.get_context("fork")
-    p = ctx.Process(target=_run_user_fn, args=(f, q, *args), kwargs=kwargs)
+    p = None
     try:
+        setup_isolation()
+        ctx = multiprocessing.get_context("fork")
+        p = ctx.Process(target=_run_user_fn, args=(f, q, *args), kwargs=kwargs)
         p.start()
         p.join()
     except BaseException as e:
-        if p.exitcode is not None and p.exitcode != 0:
+        if p is not None and p.exitcode is not None and p.exitcode != 0:
             sys.exit(p.exitcode)
-        traceback.print_exc()
         q.put_nowait(_subproc_err(type(e), str(e)))
-        sys.exit(0)
+        _close_queue_and_exit(q, 0)
+    finally:
+        os._exit(1)
 
 
 def run_isolated(f: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
@@ -214,11 +257,21 @@ def run_isolated(f: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
     ctx = multiprocessing.get_context("fork")
     q = ctx.Queue()
     p = ctx.Process(target=_namespace_root, args=(f, q, *args), kwargs=kwargs)
-    p.start()
-    p.join()
-    if p.exitcode != 0:
-        raise RuntimeError(f"{f} under isolate failed")
-    res = q.get_nowait()
+    e = None
+    try:
+        p.start()
+        p.join()
+    except BaseException as e_:
+        e = e_
+        p.kill()
+
+    try:
+        res = q.get_nowait()
+    except Empty:
+        if e is not None:
+            raise e from None
+        res = _subproc_err(RuntimeError, f"unknown error; exitcode={p.exitcode}")
+
     if isinstance(res, _subproc_ret_ok):
         return res.val
     assert isinstance(res, _subproc_err)

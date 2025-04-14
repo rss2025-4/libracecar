@@ -120,6 +120,26 @@ class batched(eqx.Module, Generic[T_co]):
             assert x == ans[0]
         return ans[0]
 
+    @staticmethod
+    def _unreduce(bds: tuple[int, ...], val: T2) -> batched[T2]:
+        return batched.create(val, bds)
+
+    @staticmethod
+    def __reduce__typed(f: Callable[[*T1_tup], T2], obj: tuple["*T1_tup"]):
+        return f, obj
+
+    def __reduce__(self):
+        return self.__reduce__typed(
+            self._unreduce,
+            (
+                self.batch_dims(),
+                self.unflatten(),
+            ),
+        )
+
+    def __reduce_ex__(self, protocol):
+        return self.__reduce__()
+
     def count(self) -> int:
         return math.prod(self.batch_dims())
 
