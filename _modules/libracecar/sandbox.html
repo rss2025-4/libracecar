@@ -186,16 +186,16 @@
 
     <span class="n">unshare</span><span class="o">.</span><span class="n">unshare</span><span class="p">(</span>
         <span class="mi">0</span>
-        <span class="c1"># | unshare.CLONE_NEWIPC</span>
-        <span class="c1"># | unshare.CLONE_NEWNET</span>
+        <span class="o">|</span> <span class="n">unshare</span><span class="o">.</span><span class="n">CLONE_NEWIPC</span>
+        <span class="o">|</span> <span class="n">unshare</span><span class="o">.</span><span class="n">CLONE_NEWNET</span>
         <span class="o">|</span> <span class="n">unshare</span><span class="o">.</span><span class="n">CLONE_NEWNS</span>
-        <span class="c1"># | unshare.CLONE_NEWPID</span>
+        <span class="o">|</span> <span class="n">unshare</span><span class="o">.</span><span class="n">CLONE_NEWPID</span>
         <span class="o">|</span> <span class="n">unshare</span><span class="o">.</span><span class="n">CLONE_NEWUSER</span>
     <span class="p">)</span>
 
-    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/proc/self/uid_map&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">uid</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">uid</span><span class="si">}</span><span class="s2"> 1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/proc/self/setgroups&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;deny&quot;</span><span class="p">)</span>
-    <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;/proc/self/gid_map&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gid</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">gid</span><span class="si">}</span><span class="s2"> 1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="c1"># Path(&quot;/proc/self/uid_map&quot;).write_text(f&quot;{uid} {uid} 1\n&quot;)</span>
+    <span class="c1"># Path(&quot;/proc/self/setgroups&quot;).write_text(f&quot;deny&quot;)</span>
+    <span class="c1"># Path(&quot;/proc/self/gid_map&quot;).write_text(f&quot;{gid} {gid} 1\n&quot;)</span>
 
     <span class="n">mount</span><span class="p">(</span><span class="s2">&quot;tmpfs&quot;</span><span class="p">,</span> <span class="s2">&quot;/dev/shm&quot;</span><span class="p">,</span> <span class="s2">&quot;tmpfs&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
 
