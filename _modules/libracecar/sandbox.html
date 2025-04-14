@@ -287,8 +287,7 @@
     <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">exitcode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">exitcode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">exitcode</span><span class="p">)</span>
-        <span class="n">q</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">(</span><span class="n">_subproc_err</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)))</span>
-        <span class="n">_close_queue_and_exit</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">_throw</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
     <span class="k">finally</span><span class="p">:</span>
         <span class="n">os</span><span class="o">.</span><span class="n">_exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 
