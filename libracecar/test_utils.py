@@ -1,12 +1,15 @@
 import multiprocessing
 import os
+import queue
 import subprocess
+import sys
 import time
 from dataclasses import dataclass
+from multiprocessing import Queue
 from multiprocessing.context import SpawnProcess
 from multiprocessing.process import BaseProcess
 from pathlib import Path
-from threading import Thread
+from threading import Lock, Thread
 from typing import (
     Callable,
     ParamSpec,
@@ -19,21 +22,24 @@ import rclpy
 from rclpy.context import Context
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
+from rclpy.publisher import Publisher
 from rclpy.qos import (
     QoSDurabilityPolicy,
     QoSHistoryPolicy,
     QoSProfile,
     QoSReliabilityPolicy,
 )
+from rclpy.subscription import Subscription
 
-from libracecar.sandbox import throw
-
+from . import sandbox
+from .sandbox import _close_queue_and_exit, print_ex, throw
 from .utils import PropagatingThread, cast, cast_unchecked
 
 P = ParamSpec("P")
 R = TypeVar("R")
 
 T = TypeVar("T")
+N = TypeVar("N", bound=Node)
 
 
 class _poll(Protocol):
@@ -68,22 +74,75 @@ class _thread:
             raise self.t.exc
 
 
-def rclpy_init():
-    try:
-        rclpy.init()
-    except RuntimeError:
-        pass
+@dataclass
+class rclpy_config:
+    params_file: Path | None = None
+
+    def as_args(self):
+        args: list[str] = []
+        if self.params_file is not None:
+            assert self.params_file.exists()
+            args.append("--ros-args")
+            args.append("--params-file")
+            args.append(str(self.params_file))
+        return args
 
 
-def _run_node(f: Callable[P, Node], *args: P.args, **kwargs: P.kwargs):
-    rclpy_init()
-    rclpy.spin(f(*args, **kwargs))
+def _run_node_subproc(f: Callable[[], Node], args: list[str]):
+    rclpy.init(args=args)
+    rclpy.spin(f())
     rclpy.shutdown()
+
+
+class GlobalNode(Node):
+    def __init__(self, context: Context) -> None:
+        super().__init__(type(self).__qualname__, context=context)
+        self.lock = Lock()
+
+        self.__pubs: dict[str, Publisher] = {}
+
+        self.__subs: dict[str, tuple[Subscription, Queue]] = {}
+
+    def publish(self, topic: str, val):
+        with self.lock:
+            if topic not in self.__pubs:
+                self.__pubs[topic] = self.create_publisher(
+                    type(val),
+                    topic,
+                    qos_profile=QoSProfile(
+                        reliability=QoSReliabilityPolicy.RELIABLE,
+                        history=QoSHistoryPolicy.KEEP_ALL,
+                        durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                    ),
+                )
+            assert self.__pubs[topic].msg_type is type(val)
+            self.__pubs[topic].publish(val)
+
+    def read(self, topic: str, tp: type[T]) -> T:
+        with self.lock:
+            if topic not in self.__subs:
+                q = Queue()
+                sub = self.create_subscription(
+                    tp,
+                    topic,
+                    lambda msg: q.put_nowait(msg),
+                    qos_profile=QoSProfile(
+                        reliability=QoSReliabilityPolicy.RELIABLE,
+                        history=QoSHistoryPolicy.KEEP_ALL,
+                        durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                    ),
+                )
+                self.__subs[topic] = sub, q
+            sub, q = self.__subs[topic]
+            assert sub.msg_type is tp
+
+        return q.get()
 
 
 @dataclass
 class proc_manager:
     _parts: list[_poll]
+    _globalnode: Union[GlobalNode, None] = None
 
     @staticmethod
     def new() -> "proc_manager":
@@ -102,13 +161,22 @@ class proc_manager:
 
         return cast_unchecked(subprocess.Popen)(inner)
 
+    @staticmethod
+    def _do_call(f, args, kwargs):
+        try:
+            f(*args, **kwargs)
+            os._exit(0)
+        except BaseException as e:
+            print_ex(e)
+        finally:
+            os._exit(1)
+
     def call(
         self, f: Callable[P, None], *args: P.args, **kwargs: P.kwargs
     ) -> SpawnProcess:
         ctx = multiprocessing.get_context("spawn")
-        p = ctx.Process(target=f, args=args, kwargs=kwargs)
+        p = ctx.Process(target=proc_manager._do_call, args=(f, args, kwargs))
         p.start()
-        self._parts.append(_call(p))
         return p
 
     def thread(self, f: Callable[P, None], *args: P.args, **kwargs: P.kwargs) -> Thread:
@@ -144,15 +212,26 @@ class proc_manager:
 
         return self.popen(cmd)
 
-    def ros_node_subproc(
-        self, node_t: Callable[P, Node], *args: P.args, **kwargs: P.kwargs
-    ):
-        return self.call(_run_node, node_t, *args, **kwargs)
+    def ros_node_subproc(self, node_t: Callable[[], Node], cfg=rclpy_config()):
+        return self.call(_run_node_subproc, node_t, cfg.as_args())
 
-    def ros_node_thread(
-        self, node_t: Callable[P, Node], *args: P.args, **kwargs: P.kwargs
-    ):
-        return self.thread(_run_node, node_t, *args, **kwargs)
+    def _ros_node_thread(self, context: Context, executor: SingleThreadedExecutor):
+        try:
+            executor.spin()
+        finally:
+            context.shutdown()
+
+    def ros_node_thread(self, node_fn: Callable[[Context], N], cfg=rclpy_config()) -> N:
+        context = Context()
+        context.init(args=cfg.as_args())
+
+        node = node_fn(context)
+        executor = SingleThreadedExecutor(context=context)
+        executor.add_node(node)
+
+        self.thread(self._ros_node_thread, context, executor)
+
+        return node
 
     def spin(self):
         try:
@@ -166,61 +245,13 @@ class proc_manager:
     def spin_thread(self):
         self.thread(self.spin)
 
+    def _ensure_globalnode(self):
+        if self._globalnode is None:
+            self._globalnode = self.ros_node_thread(GlobalNode)
+        return self._globalnode
 
-def write_topic(topic_name: str, msg):
+    def publish(self, topic: str, val):
+        self._ensure_globalnode().publish(topic, val)
 
-    rclpy_init()
-
-    node = Node(f"{write_topic.__qualname__}")
-    publisher = node.create_publisher(
-        type(msg),
-        topic_name,
-        qos_profile=QoSProfile(
-            reliability=QoSReliabilityPolicy.RELIABLE,
-            history=QoSHistoryPolicy.KEEP_LAST,
-            depth=10,
-            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-        ),
-    )
-    publisher.publish(msg)
-    node.destroy_node()
-
-
-def read_topic(topic: str, tp: type[T]) -> T:
-    context = Context()
-    context.init(args=None)
-
-    try:
-        node = Node(f"{read_topic.__qualname__}", context=context)
-
-        ans = cast[Union[tuple[T], None]]()(None)
-
-        def callback(v: T):
-            nonlocal ans
-            ans = (v,)
-            node.destroy_node()
-
-        node.create_subscription(
-            msg_type=tp,
-            topic=topic,
-            callback=callback,
-            qos_profile=QoSProfile(
-                reliability=QoSReliabilityPolicy.RELIABLE,
-                history=QoSHistoryPolicy.KEEP_LAST,
-                depth=10,
-                durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
-            ),
-        )
-
-        executor = SingleThreadedExecutor(context=context)
-        executor.add_node(node)
-
-        while ans is None:
-            executor.spin_once()
-
-        node.destroy_node()
-        (ans_,) = ans
-        return ans_
-
-    finally:
-        context.shutdown()
+    def read(self, topic: str, tp: type[T]) -> T:
+        return self._ensure_globalnode().read(topic, tp)

@@ -6,7 +6,9 @@ import math
 from typing import TypeVar
 
 import equinox as eqx
-from geometry_msgs.msg import TransformStamped
+import numpy as np
+import tf_transformations
+from geometry_msgs.msg import Pose, PoseArray, Quaternion, TransformStamped, Vector3
 from jax import Array
 from jax import numpy as jnp
 from jaxtyping import ArrayLike, Float
@@ -17,6 +19,7 @@ from libracecar.vector import unitvec, vec
 from .batched import batched
 from .plot import plot_point, plot_style, plotable
 from .utils import (
+    cast_unchecked_,
     flike,
     lazy,
     pp_obj,
@@ -69,17 +72,73 @@ class position(eqx.Module):
         return position(vec.from_arr(coord), rot)
 
     @staticmethod
-    def from_ros(pose: TransformStamped) -> lazy["position"]:
-        trans = pose.transform.translation
-
-        pos_rot = pose.transform.rotation
-        pos_rot_ = euler_from_quaternion((pos_rot.x, pos_rot.y, pos_rot.z, pos_rot.w))
-
-        assert pos_rot_[0] == 0.0
-        assert pos_rot_[1] == 0.0
-
+    def _process_trans(trans: Vector3) -> tuple[float, float]:
         assert trans.z == 0.0
-        return lazy(position.create, (trans.x, trans.y), pos_rot_[2])
+        return (trans.x, trans.y)
+
+    @staticmethod
+    def _process_quat(quat: Quaternion) -> float:
+        quat_ = euler_from_quaternion((quat.x, quat.y, quat.z, quat.w))
+        assert quat_[0] == 0.0
+        assert quat_[1] == 0.0
+        return quat_[2]
+
+    @staticmethod
+    def from_ros(pose: TransformStamped) -> lazy["position"]:
+        return lazy(
+            position.create,
+            position._process_trans(pose.transform.translation),
+            position._process_quat(pose.transform.rotation),
+        )
+
+    def to_ros(self) -> Pose:
+        x, y, z, w = tf_transformations.quaternion_from_euler(
+            0.0, 0.0, float(self.rot.to_angle())
+        )
+        quat = Quaternion()
+        quat.x = float(x)
+        quat.y = float(y)
+        quat.z = float(z)
+        quat.w = float(w)
+
+        ans = Pose()
+        ans.orientation = quat
+        ans.position.x = float(self.tran.x)
+        ans.position.y = float(self.tran.y)
+
+        return ans
+
+    @staticmethod
+    def _from_ros_pose_arr(xs, ys, thetas):
+        return batched.create((xs, ys, thetas), (len(xs),)).tuple_map(
+            lambda x, y, theta: position.create((x, y), theta)
+        )
+
+    @staticmethod
+    def from_ros_pose_arr(
+        poses: PoseArray, limit: int = 100
+    ) -> tuple[lazy[batched["position"]], int]:
+        n = len(poses.poses)
+        assert n <= limit
+        fill = limit - n
+
+        fill_float = [0.0 for _ in range(fill)]
+
+        xs = []
+        ys = []
+        thetas = []
+
+        for p in poses.poses:
+            assert isinstance(p, Pose)
+            x, y = position._process_trans(cast_unchecked_(p.position))
+            xs.append(x)
+            ys.append(y)
+            thetas.append(position._process_quat(p.orientation))
+
+        ans = lazy(
+            position._from_ros_pose_arr, np.array(xs), np.array(ys), np.array(thetas)
+        )
+        return ans, n
 
     @staticmethod
     def lazy_zero() -> lazy["position"]:

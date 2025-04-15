@@ -106,6 +106,7 @@ import functools
 import inspect
 import multiprocessing
 import os
+import signal
 import sys
 from dataclasses import dataclass
 from multiprocessing import Queue
@@ -188,20 +189,26 @@ _global_q: Union[Queue, None] = None
 
 
 def throw(e: BaseException) -> Never:
-    assert _global_q is not None
     return _throw(_global_q, e)
 
 
-def _throw(q: Queue, e: BaseException) -> Never:
-    try:
-        # exc_type, exc_value, exc_tb = sys.exc_info()
-        exc_type, exc_value, exc_tb = type(e), e, e.__traceback__
-        ex_fmt = "".join(format_exception(exc_type, exc_value, exc_tb))
-        sys.stderr.write(ex_fmt)
-        sys.stderr.flush()
+def print_ex(e: BaseException):
+    # exc_type, exc_value, exc_tb = sys.exc_info()
+    exc_type, exc_value, exc_tb = type(e), e, e.__traceback__
+    ex_fmt = "".join(format_exception(exc_type, exc_value, exc_tb))
+    sys.stderr.write(ex_fmt)
+    sys.stderr.flush()
 
-        q.put_nowait(_subproc_err(type(e), str(e)))
-        _close_queue_and_exit(q, 0)
+
+def _throw(q: Union[Queue, None], e: BaseException) -> Never:
+    try:
+        print_ex(e)
+
+        if q is not None:
+            q.put_nowait(_subproc_err(type(e), str(e)))
+            _close_queue_and_exit(q, 0)
+        else:
+            os._exit(1)
     except BaseException as e2:
         sys.stderr.write(f"_run_user_fn: failed during exception handling: {e2}")
         sys.stdout.flush()
@@ -242,9 +249,13 @@ def _namespace_root(f: Callable[P, R], q: Queue, *args: P.args, **kwargs: P.kwar
         p = ctx.Process(target=_run_user_fn, args=(f, q, *args), kwargs=kwargs)
         p.start()
         p.join()
+        assert p.exitcode is not None
+        if p.exitcode != 0:
+            raise RuntimeError(f"unknown error; exitcode={p.exitcode}")
     except BaseException as e:
-        if p is not None and p.exitcode is not None and p.exitcode != 0:
-            sys.exit(p.exitcode)
+        if p is not None:
+            p.kill()
+            p.join()
         _throw(q, e)
     finally:
         os._exit(1)
@@ -260,16 +271,19 @@ def run_isolated(f: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
     try:
         p.start()
         p.join()
+        if p.exitcode != 0:
+            raise RuntimeError(f"unknown error; exitcode={p.exitcode}")
     except BaseException as e_:
         e = e_
-        p.kill()
+        if p.exitcode is None and p.pid is not None:
+            os.kill(p.pid, signal.SIGINT)
 
     try:
         res = q.get_nowait()
     except Empty:
         if e is not None:
             raise e from None
-        res = _subproc_err(RuntimeError, f"unknown error; exitcode={p.exitcode}")
+        res = _subproc_err(RuntimeError, f"unknown error")
 
     if isinstance(res, _subproc_ret_ok):
         return res.val
