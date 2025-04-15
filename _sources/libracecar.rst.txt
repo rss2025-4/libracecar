@@ -11,6 +11,7 @@ Submodules
    libracecar.checkify
    libracecar.cone_inference
    libracecar.jax_utils
+   libracecar.maps
    libracecar.numpyro_utils
    libracecar.plot
    libracecar.ros_utils
