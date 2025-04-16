@@ -17,6 +17,7 @@ from typing import (
 )
 
 import rclpy
+import tf2_ros
 from rclpy.context import Context
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
@@ -28,6 +29,7 @@ from rclpy.qos import (
     QoSReliabilityPolicy,
 )
 from rclpy.subscription import Subscription
+from rclpy.time import Time
 
 from .sandbox import print_ex, throw
 from .utils import PropagatingThread, cast_unchecked
@@ -100,6 +102,17 @@ class GlobalNode(Node):
 
         self.__subs: dict[str, tuple[Subscription, Queue]] = {}
 
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+
+    def lookup_transform(
+        self, target_frame: str, source_frame: str
+    ) -> tf2_ros.TransformStamped:
+        with self.lock:
+            return self.tf_buffer.lookup_transform(
+                target_frame=target_frame, source_frame=source_frame, time=Time()
+            )
+
     def publish(self, topic: str, val):
         with self.lock:
             if topic not in self.__pubs:
@@ -115,7 +128,14 @@ class GlobalNode(Node):
             assert self.__pubs[topic].msg_type is type(val)
             self.__pubs[topic].publish(val)
 
-    def read_queue(self, topic: str, tp: type[T]) -> "Queue[T]":
+    def read_queue(
+        self,
+        topic: str,
+        tp: type[T],
+        *,
+        reliability=QoSReliabilityPolicy.RELIABLE,
+        durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+    ) -> "Queue[T]":
         with self.lock:
             if topic not in self.__subs:
                 q = Queue()
@@ -124,9 +144,9 @@ class GlobalNode(Node):
                     topic,
                     lambda msg: q.put_nowait(msg),
                     qos_profile=QoSProfile(
-                        reliability=QoSReliabilityPolicy.RELIABLE,
+                        reliability=reliability,
                         history=QoSHistoryPolicy.KEEP_ALL,
-                        durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                        durability=durability,
                     ),
                 )
                 self.__subs[topic] = sub, q
@@ -250,6 +270,22 @@ class proc_manager:
     def publish(self, topic: str, val):
         self._ensure_globalnode().publish(topic, val)
 
-    def read(self, topic: str, tp: type[T], timeout: float | None = None) -> T:
-        q = self._ensure_globalnode().read_queue(topic, tp)
+    def read(
+        self,
+        topic: str,
+        tp: type[T],
+        timeout: float | None = None,
+        reliability=QoSReliabilityPolicy.RELIABLE,
+        durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+    ) -> T:
+        q = self._ensure_globalnode().read_queue(
+            topic, tp, reliability=reliability, durability=durability
+        )
         return q.get(timeout=timeout)
+
+    def lookup_transform(
+        self, target_frame: str, source_frame: str
+    ) -> tf2_ros.TransformStamped:
+        return self._ensure_globalnode().lookup_transform(
+            target_frame=target_frame, source_frame=source_frame
+        )
