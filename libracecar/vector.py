@@ -5,7 +5,7 @@ from jax import numpy as jnp
 from jaxtyping import ArrayLike, Float
 
 from .plot import plot_point, plot_style, plotable
-from .utils import bval, flike, fval, jit, pformat_repr
+from .utils import bval, flike, fval, jit, pformat_repr, safe_select
 
 
 class vec(eqx.Module):
@@ -23,7 +23,13 @@ class vec(eqx.Module):
         return vec(self._v.conj())
 
     def normalize(self) -> "unitvec":
-        return unitvec(self._v / jnp.abs(self._v))
+        l = jnp.abs(self._v)
+        return safe_select(
+            l == 0.0, on_true=lambda: unitvec.one, on_false=lambda: unitvec(self._v / l)
+        )
+
+    def length(self) -> fval:
+        return jnp.abs(self._v)
 
     @staticmethod
     def create(x: flike, y: flike):

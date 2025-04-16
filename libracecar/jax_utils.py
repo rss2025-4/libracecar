@@ -4,8 +4,10 @@ from typing import Callable, Concatenate, Generic, ParamSpec, TypeVar
 
 import jax
 import numpy as np
-from jax import lax
+import numpyro
+from jax import Array, lax, random
 from jax import tree_util as jtu
+from jax.experimental.checkify import Error, ErrorCategory, checkify, user_checks
 
 from .utils import (
     PropagatingThread,
@@ -15,6 +17,7 @@ from .utils import (
     io_callback_,
     jit,
     timer,
+    tree_select,
     tree_to_ShapeDtypeStruct,
 )
 
@@ -28,11 +31,38 @@ class dispatch_spec(Generic[T]):
     def __init__(
         self,
         fn: Callable[Concatenate[T, P], tuple[T, R]],
+        seed: bool,
+        checks: frozenset[ErrorCategory],
         *args: P.args,
         **kwargs: P.kwargs,
     ):
+        self.seed = seed
+        self.checks = checks
         self.fn = fn
         self.arg_ex = tree_to_ShapeDtypeStruct((args, kwargs))
+
+    def _call(self, state: T, *args, **kwargs):
+        err, (new_state, ans) = checkify(self.fn, self.checks)(state, *args, **kwargs)
+        print("potential errors:", err._pred)
+        is_err = False
+        for x in err._pred.values():
+            is_err |= x
+        print("is_err", is_err)
+        if is_err is not False:
+            new_state = tree_select(is_err, on_true=state, on_false=new_state)
+        return new_state, (err, ans)
+
+
+def dispatch(
+    fn: Callable[Concatenate[T, P], tuple[T, R]],
+    *,
+    seed: bool = True,
+    checks: frozenset[ErrorCategory] = user_checks,
+) -> Callable[P, dispatch_spec[T]]:
+    def inner(*args: P.args, **kwargs: P.kwargs):
+        return dispatch_spec(fn, seed, checks, *args, **kwargs)
+
+    return inner
 
 
 class jax_jit_dispatcher(Generic[T]):
@@ -57,13 +87,20 @@ class jax_jit_dispatcher(Generic[T]):
                 if meth.fn is fn:
                     self.requesttype_q.put_nowait(i)
                     self.request_q.put_nowait((args, kwargs))
-                    return self.response_q.get()
+                    err, ans = self.response_q.get()
+                    assert isinstance(err, Error)
+                    err.throw()
+                    return ans
+
         assert False
 
     def run_with_setup(
         self, fn: Callable[P, T], *args: P.args, **kwargs: P.kwargs
     ) -> PropagatingThread:
-        lowered = jit(lambda: self.spin(fn(*args, **kwargs))).lower()
+        def run_fn(*args: P.args, **kwargs: P.kwargs):
+            return self.spin(fn(*args, **kwargs))
+
+        lowered = jit(run_fn).lower(*args, **kwargs)
         print("compiling:")
         with timer.create() as t:
             comp = lowered.compile()
@@ -71,7 +108,7 @@ class jax_jit_dispatcher(Generic[T]):
             print(comp.cost_analysis())
 
         def thread_fn():
-            _ = comp()
+            _ = comp(*args, **kwargs)
             assert False
 
         ans = PropagatingThread(target=thread_fn)
@@ -79,7 +116,7 @@ class jax_jit_dispatcher(Generic[T]):
         return ans
 
     def run(self, init: T) -> PropagatingThread:
-        return self.run_with_setup(lambda: init)
+        return self.run_with_setup(lambda x: x, init)
 
     def _requesttype_callback(self):
         return self.requesttype_q.get()
@@ -92,14 +129,25 @@ class jax_jit_dispatcher(Generic[T]):
 
     def spin(self, init_state: T):
 
-        def handle_request(reqtype: int, s: T) -> T:
+        init_seed = random.PRNGKey(0)
+
+        def handle_request(reqtype: int, s: tuple[T, Array]) -> tuple[T, Array]:
+            state, rng = s
             meth = self.methods[reqtype]
             req_args, req_kwargs = io_callback_(self._request_callback, meth.arg_ex)()
-            new_s, ans = meth.fn(s, *req_args, **req_kwargs)
-            io_callback_(self._response_callback, None)(ans)
-            return new_s
 
-        def loop_fn(s: T):
+            if meth.seed:
+                rng, this_key = random.split(rng)
+                assert isinstance(rng, Array)
+                with numpyro.handlers.seed(rng_seed=this_key):
+                    new_s, ans = meth._call(state, *req_args, **req_kwargs)
+            else:
+                new_s, ans = meth._call(state, *req_args, **req_kwargs)
+
+            io_callback_(self._response_callback, None)(ans)
+            return new_s, rng
+
+        def loop_fn(s: tuple[T, Array]):
             reqtype = io_callback_(
                 self._requesttype_callback, jax.ShapeDtypeStruct((), np.int32)
             )()
@@ -116,7 +164,7 @@ class jax_jit_dispatcher(Generic[T]):
         lax.while_loop(
             cond_fun=lambda _: True,
             body_fun=loop_fn,
-            init_val=init_state,
+            init_val=(init_state, init_seed),
         )
 
 

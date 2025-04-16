@@ -18,7 +18,6 @@ from libracecar.utils import (
     bval,
     ensure_not_weak_typed,
     flike,
-    fpair,
     fval,
     ival,
     jit,

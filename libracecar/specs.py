@@ -2,6 +2,8 @@
 properties of the car, and functions to compute car states after actions
 """
 
+from __future__ import annotations
+
 import math
 from typing import TypeVar
 
@@ -16,7 +18,7 @@ from tf_transformations import euler_from_quaternion
 
 from libracecar.vector import unitvec, vec
 
-from .batched import batched
+from .batched import batched, vector
 from .plot import plot_point, plot_style, plotable
 from .utils import (
     cast_unchecked_,
@@ -109,15 +111,12 @@ class position(eqx.Module):
         return ans
 
     @staticmethod
-    def _from_ros_pose_arr(xs, ys, thetas):
-        return batched.create((xs, ys, thetas), (len(xs),)).tuple_map(
-            lambda x, y, theta: position.create((x, y), theta)
-        )
+    def _from_ros_pose_arr(xs, ys, thetas, n) -> vector[position]:
+        args = vector(n, batched.create((xs, ys, thetas), (len(xs),)))
+        return args.map(lambda args: position.create((args[0], args[1]), args[2]))
 
     @staticmethod
-    def from_ros_pose_arr(
-        poses: PoseArray, limit: int = 100
-    ) -> tuple[lazy[batched["position"]], int]:
+    def from_ros_pose_arr(poses: PoseArray, limit: int = 100) -> lazy[vector[position]]:
         n = len(poses.poses)
         assert n <= limit
         fill = limit - n
@@ -135,10 +134,13 @@ class position(eqx.Module):
             ys.append(y)
             thetas.append(position._process_quat(p.orientation))
 
-        ans = lazy(
-            position._from_ros_pose_arr, np.array(xs), np.array(ys), np.array(thetas)
+        return lazy(
+            position._from_ros_pose_arr,
+            np.array(xs + fill_float),
+            np.array(ys + fill_float),
+            np.array(thetas + fill_float),
+            np.array(n, dtype=jnp.int32),
         )
-        return ans, n
 
     @staticmethod
     def lazy_zero() -> lazy["position"]:

@@ -3,6 +3,7 @@ from __future__ import annotations
 import functools
 import math
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Concatenate,
@@ -32,7 +33,12 @@ from .utils import (
     pp_obj,
     pretty_print,
     shape_of,
+    tree_select,
+    tree_to_ShapeDtypeStruct,
 )
+
+if TYPE_CHECKING:
+    from jax._src.basearray import _IndexUpdateRef as _IndexUpdateRef_jax
 
 traceback_util.register_exclusion(__file__)
 
@@ -44,6 +50,8 @@ T1 = TypeVar("T1")
 T2 = TypeVar("T2")
 T3 = TypeVar("T3")
 T1_tup = TypeVarTuple("T1_tup")
+
+Tree = T
 
 
 def _remove_prefix(
@@ -120,6 +128,22 @@ class batched(eqx.Module, Generic[T_co]):
             assert x == ans[0]
         return ans[0]
 
+    def item_shape(self) -> Tree[T_co]:
+        return jtu.tree_unflatten(self._pytree, self._shapes)
+
+    @staticmethod
+    def zeros(example: Tree[T], batch_dims: tuple[int, ...] = ()) -> batched[T]:
+        shapes, tree = jtu.tree_flatten(tree_to_ShapeDtypeStruct(example))
+        return batched(
+            _bufs=[jnp.zeros(batch_dims + s.shape, dtype=s.dtype) for s in shapes],
+            _shapes=shapes,
+            _pytree=tree,
+            _tracking=jnp.zeros(batch_dims) if len(shapes) == 0 else None,
+        )
+
+    def zeros_like(self, batch_dims: tuple[int, ...] = ()) -> batched[T_co]:
+        return batched.zeros(self.item_shape(), batch_dims)
+
     @staticmethod
     def _unreduce(bds: tuple[int, ...], val: T2) -> batched[T2]:
         return batched.create(val, bds)
@@ -187,6 +211,7 @@ class batched(eqx.Module, Generic[T_co]):
     roll = _batched_treemap_of_one(jnp.roll)
     mean = _batched_treemap_of_one(jnp.mean)
     sum = _batched_treemap_of_one(jnp.sum)
+    transpose = _batched_treemap_of_one(jnp.transpose)
 
     def __getitem__(self, idx: Any) -> batched[T_co]:
         return batched_treemap(lambda x: x[idx], self)
@@ -338,6 +363,10 @@ class batched(eqx.Module, Generic[T_co]):
         sorted_indices = jnp.argsort(keys.uf)
         return self[sorted_indices]
 
+    @property
+    def at(self):
+        return _IndexUpdateHelper(self)
+
 
 @overload
 def batched_vmap(
@@ -431,3 +460,157 @@ def batched_treemap(f: Callable[..., Array], /, *args: batched[T]) -> batched[T]
     )
     _ = ans.batch_dims()
     return ans
+
+
+class _IndexUpdateHelper(eqx.Module, Generic[T]):
+    _v: batched[T]
+
+    def __getitem__(self, index: Any) -> _IndexUpdateRef[T]:
+        return _IndexUpdateRef(self._v, index)
+
+
+def _index_update_meth1(
+    fn: Callable[
+        [type[_IndexUpdateRef_jax]],
+        Callable[Concatenate[_IndexUpdateRef_jax, P], Array],
+    ],
+):
+    def inner(
+        self: _IndexUpdateRef[T], /, *args: P.args, **kwargs: P.kwargs
+    ) -> batched[T]:
+
+        def inner2(x: Array):
+            _ref = x.at[self._idx]
+            return fn(type(_ref))(_ref, *args, **kwargs)
+
+        return batched_treemap(inner2, self._v)
+
+    return inner
+
+
+def _index_update_meth2(
+    fn: Callable[
+        [type[_IndexUpdateRef_jax]],
+        Callable[Concatenate[_IndexUpdateRef_jax, Array, P], Array],
+    ],
+):
+    def inner(
+        self: _IndexUpdateRef[T],
+        values: batched[T],
+        /,
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> batched[T]:
+
+        def inner2(x: Array, y: Array):
+            _ref = x.at[self._idx]
+            return fn(type(_ref))(_ref, y, *args, **kwargs)
+
+        return batched_treemap(inner2, self._v, values)
+
+    return inner
+
+
+class _IndexUpdateRef(eqx.Module, Generic[T]):
+    _v: batched[T]
+    _idx: Any
+
+    get = _index_update_meth1(lambda x: x.get)
+    set = _index_update_meth2(lambda x: x.set)
+
+    def dynamic_slice(self, slice_sizes: Sequence[int]):
+        return self._v.dynamic_slice(self._idx, slice_sizes)
+
+    def dynamic_update(
+        self, values: batched[T], allow_negative_indices: bool | Sequence[bool] = True
+    ):
+        def update_one(x: Array, y: Array):
+            return lax.dynamic_update_slice(
+                x, y, self._idx, allow_negative_indices=allow_negative_indices
+            )
+
+        return batched_treemap(update_one, self._v, values)
+
+
+class vector(eqx.Module, Generic[T_co]):
+    length: ival
+    buf: batched[T_co]
+
+    @staticmethod
+    def empty(ex: Tree[T], capacity: int) -> vector[T]:
+        return vector(jnp.array(0), batched.zeros(ex, (capacity,)))
+
+    @staticmethod
+    def empty_like(ex: vector[T2], capacity: int) -> vector[T2]:
+        return vector(jnp.array(0), ex.buf.zeros_like((capacity,)))
+
+    def __repr__(self):
+        l = None
+        try:
+            l = int(self.length)
+        except:
+            pass
+
+        if l is not None:
+            content = self.buf[:l]
+        else:
+            content = self.buf
+
+        return pp_obj(
+            "vector",
+            pretty_print(self.length),
+            str(len(self.buf)),
+            pretty_print(content.unflatten()),
+        ).format()
+
+    def __getitem__(self, idx: Any) -> T_co:
+        return self.buf[idx].unwrap()
+
+    def __add__(self: vector[T], new: T) -> vector[T]:
+        return vector(
+            self.length + 1,
+            self.buf.at[self.length].set(batched.create(new)),
+        )
+
+    def append_batched(self, new: batched[T_co]):
+        (n,) = new.batch_dims()
+        return vector(
+            self.length + n,
+            self.buf.at[self.length].dynamic_update(new, allow_negative_indices=False),
+        )
+
+    def check(self):
+        from jax.experimental import checkify
+
+        n = len(self.buf)
+        checkify.check(
+            (0 <= self.length) & (self.length < n),
+            f"out of bounds; len= {{}} / {n}",
+            self.length,
+        )
+
+    def map(self, f: Callable[[T_co], T2], /, *, sequential=False) -> vector[T2]:
+        return vector(self.length, batched_vmap(f, self.buf, sequential=sequential))
+
+    def scan(
+        self, f: Callable[[T2, T_co], tuple[T2, T3]], init: T2
+    ) -> tuple[T2, batched[T3]]:
+
+        def inner(
+            carry: T2, x_idx: batched[tuple[T_co, tuple[ival, ...]]]
+        ) -> tuple[T2, batched[T3]]:
+            (x, (idx,)) = x_idx.unwrap()
+
+            new_carry, y_ = f(carry, x)
+            y = batched.create(y_)
+
+            return tree_select(
+                idx < self.length,
+                on_true=(new_carry, y),
+                on_false=(carry, y.zeros_like()),
+            )
+
+        return lax.scan(inner, init=init, xs=batched_zip(self.buf, self.buf.all_idxs()))
+
+    def fill_with(self: vector[T], fill: T) -> batched[T]:
+        return self.buf.enumerate(lambda v, i: tree_select(i < self.length, v, fill))

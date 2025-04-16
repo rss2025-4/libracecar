@@ -1,8 +1,6 @@
 import multiprocessing
 import os
-import queue
 import subprocess
-import sys
 import time
 from dataclasses import dataclass
 from multiprocessing import Queue
@@ -31,9 +29,8 @@ from rclpy.qos import (
 )
 from rclpy.subscription import Subscription
 
-from . import sandbox
-from .sandbox import _close_queue_and_exit, print_ex, throw
-from .utils import PropagatingThread, cast, cast_unchecked
+from .sandbox import print_ex, throw
+from .utils import PropagatingThread, cast_unchecked
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -118,7 +115,7 @@ class GlobalNode(Node):
             assert self.__pubs[topic].msg_type is type(val)
             self.__pubs[topic].publish(val)
 
-    def read(self, topic: str, tp: type[T]) -> T:
+    def read_queue(self, topic: str, tp: type[T]) -> "Queue[T]":
         with self.lock:
             if topic not in self.__subs:
                 q = Queue()
@@ -136,7 +133,7 @@ class GlobalNode(Node):
             sub, q = self.__subs[topic]
             assert sub.msg_type is tp
 
-        return q.get()
+        return q
 
 
 @dataclass
@@ -253,5 +250,6 @@ class proc_manager:
     def publish(self, topic: str, val):
         self._ensure_globalnode().publish(topic, val)
 
-    def read(self, topic: str, tp: type[T]) -> T:
-        return self._ensure_globalnode().read(topic, tp)
+    def read(self, topic: str, tp: type[T], timeout: float | None = None) -> T:
+        q = self._ensure_globalnode().read_queue(topic, tp)
+        return q.get(timeout=timeout)
