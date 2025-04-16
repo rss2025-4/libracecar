@@ -75,7 +75,7 @@ class position(eqx.Module):
 
     @staticmethod
     def _process_trans(trans: Vector3) -> tuple[float, float]:
-        assert trans.z == 0.0
+        assert abs(trans.z) < 1e-8
         return (trans.x, trans.y)
 
     @staticmethod
