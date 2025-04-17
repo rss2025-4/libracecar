@@ -36,6 +36,31 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">geometry_msgs.msg</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pose</span><span class="p">,</span> <span class="n">Transform</span><span class="p">,</span> <span class="n">TransformStamped</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">rclpy.time</span><span class="w"> </span><span class="kn">import</span> <span class="n">Time</span>
 
+
+<div class="viewcode-block" id="pose_to_transform">
+<a class="viewcode-back" href="../../libracecar.transforms.html#libracecar.transforms.pose_to_transform">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pose_to_transform</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">Pose</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Transform</span><span class="p">:</span>
+    <span class="n">ans</span> <span class="o">=</span> <span class="n">Transform</span><span class="p">()</span>
+    <span class="n">ans</span><span class="o">.</span><span class="n">translation</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">ans</span><span class="o">.</span><span class="n">translation</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span>
+    <span class="n">ans</span><span class="o">.</span><span class="n">translation</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span>
+    <span class="n">ans</span><span class="o">.</span><span class="n">rotation</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">orientation</span>
+    <span class="k">return</span> <span class="n">ans</span></div>
+
+
+
+<div class="viewcode-block" id="transform_to_pose">
+<a class="viewcode-back" href="../../libracecar.transforms.html#libracecar.transforms.transform_to_pose">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">transform_to_pose</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">Transform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pose</span><span class="p">:</span>
+    <span class="n">ans</span> <span class="o">=</span> <span class="n">Pose</span><span class="p">()</span>
+    <span class="n">ans</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">translation</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">ans</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">translation</span><span class="o">.</span><span class="n">y</span>
+    <span class="n">ans</span><span class="o">.</span><span class="n">position</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">translation</span><span class="o">.</span><span class="n">z</span>
+    <span class="n">ans</span><span class="o">.</span><span class="n">orientation</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">rotation</span>
+    <span class="k">return</span> <span class="n">ans</span></div>
+
+
+
 <span class="c1"># tf_to_se3 and se3_to_tf are copied and modified from tf_lecture_example</span>
 
 
