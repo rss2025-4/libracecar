@@ -20,8 +20,11 @@ services:
       - XDG_CURRENT_DESKTOP=GNOME
       - LOCALE_ARCHIVE=${LOCALE_ARCHIVE}
       - SSH_AUTH_SOCK=$SSH_AUTH_SOCK
+      - FORCE_COLOR=1
+      - BETTER_EXCEPTIONS=1
     volumes:
       - ../../racecar_ws_src:/home/dockeruser/racecar_ws/src
+      - ../../:/home/dockeruser/repos
       - /nix:/nix
       - ${HOME}/.emacs.d:/home/dockeruser/.emacs.d
       # - ${HOME}/.ssh:/home/dockeruser/.ssh

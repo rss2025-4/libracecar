@@ -3,6 +3,25 @@ import tf_transformations
 from geometry_msgs.msg import Pose, Transform, TransformStamped
 from rclpy.time import Time
 
+
+def pose_to_transform(p: Pose) -> Transform:
+    ans = Transform()
+    ans.translation.x = p.position.x
+    ans.translation.y = p.position.y
+    ans.translation.z = p.position.z
+    ans.rotation = p.orientation
+    return ans
+
+
+def transform_to_pose(t: Transform) -> Pose:
+    ans = Pose()
+    ans.position.x = t.translation.x
+    ans.position.y = t.translation.y
+    ans.position.z = t.translation.z
+    ans.orientation = t.rotation
+    return ans
+
+
 # tf_to_se3 and se3_to_tf are copied and modified from tf_lecture_example
 
 

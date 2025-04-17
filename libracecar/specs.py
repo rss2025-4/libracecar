@@ -10,7 +10,14 @@ from typing import TypeVar
 import equinox as eqx
 import numpy as np
 import tf_transformations
-from geometry_msgs.msg import Pose, PoseArray, Quaternion, TransformStamped, Vector3
+from geometry_msgs.msg import (
+    Point,
+    Pose,
+    PoseArray,
+    Quaternion,
+    TransformStamped,
+    Vector3,
+)
 from jax import Array
 from jax import numpy as jnp
 from jaxtyping import ArrayLike, Float
@@ -33,6 +40,8 @@ min_turn_radius = 1.0
 
 
 class position(eqx.Module):
+    """a 2d pose"""
+
     tran: vec
     rot: unitvec
 
@@ -74,8 +83,7 @@ class position(eqx.Module):
         return position(vec.from_arr(coord), rot)
 
     @staticmethod
-    def _process_trans(trans: Vector3) -> tuple[float, float]:
-        assert abs(trans.z) < 1e-8
+    def _process_trans(trans: Vector3 | Point) -> tuple[float, float]:
         return (trans.x, trans.y)
 
     @staticmethod
@@ -91,6 +99,14 @@ class position(eqx.Module):
             position.create,
             position._process_trans(pose.transform.translation),
             position._process_quat(pose.transform.rotation),
+        )
+
+    @staticmethod
+    def from_ros_pose(pose: Pose) -> lazy["position"]:
+        return lazy(
+            position.create,
+            position._process_trans(pose.position),
+            position._process_quat(pose.orientation),
         )
 
     def to_ros(self) -> Pose:
@@ -129,7 +145,7 @@ class position(eqx.Module):
 
         for p in poses.poses:
             assert isinstance(p, Pose)
-            x, y = position._process_trans(cast_unchecked_(p.position))
+            x, y = position._process_trans(p.position)
             xs.append(x)
             ys.append(y)
             thetas.append(position._process_quat(p.orientation))

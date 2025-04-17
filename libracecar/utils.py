@@ -318,6 +318,7 @@ class PropagatingThread(Thread):
     def join(self, timeout=None):
         super(PropagatingThread, self).join(timeout)
         if self.exc:
+            print("PropagatingThread: exception; reraising", flush=True)
             raise self.exc
         return self.ret
 
@@ -412,6 +413,8 @@ class lazy(eqx.Module, Generic[T]):
     args: Any
     kwargs: Any
 
+    __repr__ = pformat_repr
+
     def __init__(self, fn: Callable[P, T], *args: P.args, **kwargs: P.kwargs):
         self.fn = fn
         self.args = args
@@ -440,3 +443,7 @@ def _wrap_print(x: T) -> T:
 
 
 print = _wrap_print(print)
+
+
+def check_eq(a: T, b: T):
+    assert a == b, f"not equal: {a} and {b}"

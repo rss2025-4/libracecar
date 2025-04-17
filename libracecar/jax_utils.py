@@ -12,6 +12,7 @@ from jax.experimental.checkify import Error, ErrorCategory, checkify, user_check
 from .utils import (
     PropagatingThread,
     cond_,
+    debug_print,
     flike,
     fval,
     io_callback_,
@@ -41,7 +42,10 @@ class dispatch_spec(Generic[T]):
         self.fn = fn
         self.arg_ex = tree_to_ShapeDtypeStruct((args, kwargs))
 
-    def _call(self, state: T, *args, **kwargs):
+        self.arg_shapes, self.arg_tree = jtu.tree_flatten(self.arg_ex)
+
+    def _call(self, state: T, *req_bufs):
+        args, kwargs = self.arg_tree.unflatten(req_bufs)
         err, (new_state, ans) = checkify(self.fn, self.checks)(state, *args, **kwargs)
         print("potential errors:", err._pred)
         is_err = False
@@ -82,11 +86,12 @@ class jax_jit_dispatcher(Generic[T]):
         *args: P.args,
         **kwargs: P.kwargs,
     ) -> R:
+        in_bufs, in_tree = jtu.tree_flatten((args, kwargs))
         with self.lock:
             for i, meth in enumerate(self.methods):
-                if meth.fn is fn:
+                if meth.fn is fn and meth.arg_tree == in_tree:
                     self.requesttype_q.put_nowait(i)
-                    self.request_q.put_nowait((args, kwargs))
+                    self.request_q.put_nowait(in_bufs)
                     err, ans = self.response_q.get()
                     assert isinstance(err, Error)
                     err.throw()
@@ -134,15 +139,15 @@ class jax_jit_dispatcher(Generic[T]):
         def handle_request(reqtype: int, s: tuple[T, Array]) -> tuple[T, Array]:
             state, rng = s
             meth = self.methods[reqtype]
-            req_args, req_kwargs = io_callback_(self._request_callback, meth.arg_ex)()
+            req_bufs = io_callback_(self._request_callback, meth.arg_shapes)()
 
             if meth.seed:
                 rng, this_key = random.split(rng)
                 assert isinstance(rng, Array)
                 with numpyro.handlers.seed(rng_seed=this_key):
-                    new_s, ans = meth._call(state, *req_args, **req_kwargs)
+                    new_s, ans = meth._call(state, *req_bufs)
             else:
-                new_s, ans = meth._call(state, *req_args, **req_kwargs)
+                new_s, ans = meth._call(state, *req_bufs)
 
             io_callback_(self._response_callback, None)(ans)
             return new_s, rng

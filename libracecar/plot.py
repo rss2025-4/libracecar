@@ -1,3 +1,4 @@
+import functools
 from dataclasses import dataclass
 from typing import (
     Any,
@@ -185,6 +186,8 @@ class plotfn_(eqx.Module):
 
 
 def plotfn(f: Callable[Concatenate[plot_ctx, P], plot_ctx]) -> Callable[P, plotable]:
+
+    @functools.wraps(f)
     def inner(*args: P.args, **kwargs: P.kwargs) -> plotable:
         return batched.create(plotfn_(f, args, kwargs))
 
