@@ -105,7 +105,7 @@ class jax_jit_dispatcher(Generic[T]):
         def run_fn(*args: P.args, **kwargs: P.kwargs):
             return self.spin(fn(*args, **kwargs))
 
-        lowered = jit(run_fn).lower(*args, **kwargs)
+        lowered = jit(run_fn, backend="cuda").lower(*args, **kwargs)
         print("compiling:")
         with timer.create() as t:
             comp = lowered.compile()

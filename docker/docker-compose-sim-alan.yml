@@ -6,12 +6,12 @@ services:
       args:
         BASE_IMAGE: sebagarc/racecar2
         # BASE_IMAGE: nvidia/cuda:12.8.1-devel-ubuntu24.04
-        DOCKER_UID: 1000
-        DOCKER_GID: 1000
+        # DOCKER_UID: 1000
+        # DOCKER_GID: 1000
     image: local/racecar-sim
     privileged: true
     # user: "1000:1000"
-    entrypoint: /home/dockeruser/racecar_ws/src/libracecar/docker/entrypoint_sim_alan.sh
+    entrypoint: /root/racecar_ws/src/libracecar/docker/entrypoint_sim_alan.sh
     environment:
       - DISPLAY=${DISPLAY}
       # have /etc/profile.d/xdg_dirs_desktop_session.sh initialize XDG_DATA_DIRS
@@ -21,27 +21,28 @@ services:
       - LOCALE_ARCHIVE=${LOCALE_ARCHIVE}
       - SSH_AUTH_SOCK=$SSH_AUTH_SOCK
       - FORCE_COLOR=1
+      - TERM=xterm-256color
       - BETTER_EXCEPTIONS=1
     volumes:
-      - ../../racecar_ws_src:/home/dockeruser/racecar_ws/src
-      - ../../:/home/dockeruser/repos
+      - ../../racecar_ws_src:/root/racecar_ws/src
+      - ../../:/root/repos
       - /nix:/nix
-      - ${HOME}/.emacs.d:/home/dockeruser/.emacs.d
-      # - ${HOME}/.ssh:/home/dockeruser/.ssh
+      - ${HOME}/.emacs.d:/root/.emacs.d
+      # - ${HOME}/.ssh:/root/.ssh
       - ${HOME}:${HOME}
-      - ${HOME}/.cache/nix:/home/dockeruser/.cache/nix
+      - ${HOME}/.cache/nix:/root/.cache/nix
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /var/run/docker.sock:/var/run/docker.sock
-      - ../.cache/pypoetry_docker:/home/dockeruser/.cache/pypoetry
-      - ../.cache/pip_docker:/home/dockeruser/.cache/pip
+      - ../.cache/pypoetry_docker:/root/.cache/pypoetry
+      - ../.cache/pip_docker:/root/.cache/pip
       - $SSH_AUTH_SOCK:$SSH_AUTH_SOCK
 
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-      # - ${HOME}/.nix-profile:/home/dockeruser/.nix-profile:ro
-      - ${HOME}/.local/share/fonts:/home/dockeruser/.local/share/fonts:ro
-      - ${HOME}/.fontconfig:/home/dockeruser/.fontconfig:ro
-      - ${HOME}/.config/fontconfig:/home/dockeruser/.config/fontconfig:ro
+      # - ${HOME}/.nix-profile:/root/.nix-profile:ro
+      - ${HOME}/.local/share/fonts:/root/.local/share/fonts:ro
+      - ${HOME}/.fontconfig:/root/.fontconfig:ro
+      - ${HOME}/.config/fontconfig:/root/.config/fontconfig:ro
 
     deploy:
       resources:
