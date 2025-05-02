@@ -87,9 +87,9 @@ class rclpy_config:
         return args
 
 
-def _run_node_subproc(f: Callable[[], Node], args: list[str]):
-    rclpy.init(args=args)
-    rclpy.spin(f())
+def _run_node_subproc(f: Callable[[], Node], ros_args: list[str], args, kwargs):
+    rclpy.init(args=ros_args)
+    rclpy.spin(f(*args, **kwargs))
     rclpy.shutdown()
 
 
@@ -229,8 +229,11 @@ class proc_manager:
 
         return self.popen(cmd)
 
-    def ros_node_subproc(self, node_t: Callable[[], Node], cfg=rclpy_config()):
-        return self.call(_run_node_subproc, node_t, cfg.as_args())
+    def ros_node_subproc(self, node_t: Callable[P, Node], cfg=rclpy_config()):
+        def inner(*args: P.args, **kwargs: P.kwargs):
+            return self.call(_run_node_subproc, node_t, cfg.as_args(), args, kwargs)
+
+        return inner
 
     def _ros_node_thread(self, context: Context, executor: SingleThreadedExecutor):
         try:

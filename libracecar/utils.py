@@ -408,6 +408,20 @@ class timer:
         self._time = None
 
 
+def time_function(f: Callable[P, R]) -> Callable[P, R]:
+
+    def inner(*args: P.args, **kwargs: P.kwargs):
+        __tracebackhide__ = True
+        start = time.time()
+        try:
+            return f(*args, **kwargs)
+        finally:
+            took = time.time() - start
+            print(f"{f.__qualname__} took {took} seconds")
+
+    return inner
+
+
 class lazy(eqx.Module, Generic[T]):
     fn: Callable[..., T] = eqx.field(static=True)
     args: Any
