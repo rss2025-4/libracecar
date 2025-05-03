@@ -367,6 +367,13 @@ class batched(eqx.Module, Generic[T_co]):
     def at(self):
         return _IndexUpdateHelper(self)
 
+    def max(self, key: Callable[[T_co], Array]) -> T_co:
+        (n,) = self.batch_dims()
+        scores = self.map(key)
+        assert scores.item_shape().shape == ()
+        am = jnp.argmax(scores.uf)
+        return self[am].unwrap()
+
 
 @overload
 def batched_vmap(
