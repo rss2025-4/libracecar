@@ -145,6 +145,16 @@ class batched(eqx.Module, Generic[T_co]):
         return batched.zeros(self.item_shape(), batch_dims)
 
     @staticmethod
+    def create_stack(
+        val: Sequence[T2], batch_dims: tuple[int, ...] = ()
+    ) -> batched[T2]:
+        return batched.stack([batched.create(x, batch_dims) for x in val], axis=0)
+
+    @staticmethod
+    def create_array(x: Array) -> batched[Array]:
+        return batched.create(x, x.shape)
+
+    @staticmethod
     def _unreduce(bds: tuple[int, ...], val: T2) -> batched[T2]:
         return batched.create(val, bds)
 
@@ -412,8 +422,16 @@ def batched_vmap(f: Callable[..., R], *args: batched, sequential=False) -> batch
         return ans
 
 
-def batched_zip(a1: batched[T1], a2: batched[T2], /) -> batched[tuple[T1, T2]]:
-    return batched_vmap(lambda *args: args, a1, a2)
+@overload
+def batched_zip(a1: batched[T1], a2: batched[T2], /) -> batched[tuple[T1, T2]]: ...
+@overload
+def batched_zip(
+    a1: batched[T1], a2: batched[T2], a3: batched[T3], /
+) -> batched[tuple[T1, T2, T3]]: ...
+
+
+def batched_zip(*args: batched[T]) -> batched[tuple]:
+    return batched_vmap(lambda *args: args, *args)
 
 
 @overload

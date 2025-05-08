@@ -4,7 +4,6 @@ from typing import Callable, Concatenate, Generic, ParamSpec, TypeVar
 
 import jax
 import numpy as np
-import numpyro
 from jax import Array, lax, random
 from jax import tree_util as jtu
 from jax.experimental.checkify import Error, ErrorCategory, checkify, user_checks
@@ -133,6 +132,7 @@ class jax_jit_dispatcher(Generic[T]):
         self.response_q.put_nowait(res)
 
     def spin(self, init_state: T):
+        import numpyro
 
         init_seed = random.PRNGKey(0)
 

@@ -33,15 +33,15 @@ class vec(eqx.Module):
 
     @staticmethod
     def create(x: flike, y: flike):
-        x = jnp.array(x, dtype=np.float32)
-        y = jnp.array(y, dtype=np.float32)
+        x = jnp.array(x, dtype=float)
+        y = jnp.array(y, dtype=float)
         assert x.shape == ()
         assert y.shape == ()
         return vec(lax.complex(x, y))
 
     @staticmethod
     def from_arr(x: Float[ArrayLike, "2"]):
-        x = jnp.array(x, dtype=np.float32)
+        x = jnp.array(x, dtype=float)
         assert x.shape == (2,)
         return vec(lax.complex(x[0], x[1]))
 

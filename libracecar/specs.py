@@ -8,6 +8,7 @@ import math
 from typing import TypeVar
 
 import equinox as eqx
+import jax
 import numpy as np
 import tf_transformations
 from geometry_msgs.msg import (
@@ -16,24 +17,29 @@ from geometry_msgs.msg import (
     PoseArray,
     Quaternion,
     TransformStamped,
+    Twist,
     Vector3,
 )
-from jax import Array
+from jax import Array, lax
 from jax import numpy as jnp
 from jaxtyping import ArrayLike, Float
 from tf_transformations import euler_from_quaternion
 
-from libracecar.vector import unitvec, vec
-
-from .batched import batched, vector
-from .plot import plot_point, plot_style, plotable
+from .batched import batched, batched_vmap, vector
+from .jax_utils import divide_x_at_zero
+from .plot import plot_ctx, plot_point, plot_style, plotable, plotmethod
 from .utils import (
     cast_unchecked_,
     flike,
+    fval,
+    jit,
     lazy,
+    pformat_repr,
     pp_obj,
     pretty_print,
+    safe_select,
 )
+from .vector import unitvec, vec
 
 turn_angle_limit = math.pi / 8
 min_turn_radius = 1.0
@@ -192,110 +198,163 @@ class position(eqx.Module):
         return self._pretty_print().format()
 
 
-# @jaxtyped(typechecker=typechecker)
-# class path_segment(eqx.Module):
-#     angle: fval
-#     length: fval
+class twist_t(eqx.Module):
+    # pixel / s
+    linear: vec
+    # rad / s
+    angular: fval
+    # s
+    time: fval
 
-#     def __init__(self, angle: flike, length: flike):
-#         self.angle = jnp.array(angle)
-#         self.length = jnp.array(length)
+    __repr__ = pformat_repr
 
-#     def clip(self) -> "path_segment":
-#         return path_segment(
-#             angle=jnp.clip(self.angle, -turn_angle_limit, turn_angle_limit),
-#             length=self.length,
-#         )
+    @staticmethod
+    def _create(linear_x, linear_y, angular, time):
+        return twist_t(vec.create(linear_x, linear_y), angular, time)
 
-#     @jaxtyped(typechecker=typechecker)
-#     def move(self, old: position) -> position:
-#         # ang=pi/8 ==> circle of radius 1
-#         # ang=pi/8 , dist=pi/2 ==> turn=pi/2
+    @staticmethod
+    def zero():
+        return twist_t(vec.create(0, 0), jnp.array(0.0), jnp.array(0.0))
+
+    @staticmethod
+    def from_ros(msg: Twist, time: float, res: float) -> lazy["twist_t"]:
+        assert msg.linear.z == 0.0
+
+        assert msg.angular.x == 0.0
+        assert msg.angular.y == 0.0
+
+        return lazy(
+            twist_t._create,
+            linear_x=float(msg.linear.x) / res,
+            linear_y=float(msg.linear.y) / res,
+            angular=float(msg.angular.z),
+            time=time,
+        )
+
+    def to_position(self) -> position:
+        # ang = exp( (angular * t) * i) * linear
+        # ang_integal = exp( (angular * t) * i) / (angular * i) * linear
+        # ang_integal(0) = 1 / (angular * i) * linear
+        # ang_integal(T) = rot / (angular * i) linear
+
+        def n(angular: fval):
+            rot = unitvec.from_angle(angular * self.time)
+            return rot - unitvec.one
+
+        def d(angular: fval):
+            return angular * unitvec.i
+
+        def nonzero_case():
+            return n(self.angular) / d(self.angular)
+
+        def zero_case():
+            return divide_x_at_zero(n)(self.angular) / divide_x_at_zero(d)(self.angular)
+
+        ans = safe_select(
+            jnp.abs(self.angular) <= 1e-5,
+            on_false=nonzero_case,
+            on_true=zero_case,
+        )
+
+        return position(ans * self.linear, unitvec.from_angle(self.angular * self.time))
+
+    def transform(self, transform: position) -> twist_t:
+
+        def inner(t: fval):
+            transform_self = twist_t(self.linear, self.angular, t).to_position()
+            transform_other = transform.invert_pose() + transform_self + transform
+            return transform_other.tran
+
+        _primals_out, tangents_out = jax.jvp(inner, (0.0,), (1.0,))
+        assert isinstance(tangents_out, vec)
+
+        return twist_t(tangents_out, self.angular, self.time)
 
 
-#         turn = (self.angle / turn_angle_limit) * self.length / min_turn_radius
+class path_segment(eqx.Module):
+    angle: fval
+    length: fval
 
-#         h1 = old.heading
-#         h2 = old.heading + turn
+    def __init__(self, angle: flike, length: flike):
+        self.angle = jnp.array(angle)
+        self.length = jnp.array(length)
 
-#         zero_turn = jnp.abs(turn) <= 1e-8
+    def clip(self) -> "path_segment":
+        return path_segment(
+            angle=jnp.clip(self.angle, -turn_angle_limit, turn_angle_limit),
+            length=self.length,
+        )
 
-#         offsetx = safe_select(
-#             zero_turn,
-#             on_false=lambda: ((jnp.sin(h2) - jnp.sin(h1)) / turn * self.length),
-#             on_true=lambda: self.length,
-#         )
+    def move(self, old: position) -> position:
+        # ang=pi/8 ==> circle of radius 1
+        # ang=pi/8 , dist=pi/2 ==> turn=pi/2
 
-#         offsety = safe_select(
-#             zero_turn,
-#             on_false=lambda: ((-jnp.cos(h2) + jnp.cos(h1)) / turn * self.length),
-#             on_true=lambda: 0.0,
-#         )
+        # suppose: move at 1m/s with self.length seconds
 
-#         new_pos = old.coord + jnp.array([offsetx, offsety])
+        # ang=pi/8, v=1m/s ==> ang_v = 1 rad/s
 
-#         return position(
-#             coord=new_pos,
-#             heading=h2,
-#         )
+        twist = twist_t(
+            linear=vec.create(1, 0),
+            angular=(self.angle / (math.pi / 8)),
+            time=self.length,
+        )
 
-#     __repr__ = pformat_repr
+        return old + twist.to_position()
 
-#     @plotmethod
-#     def plot(self, ctx: plot_ctx, start: position, style: plot_style = plot_style()):
-#         def plot_one(d: fval, ctx: plot_ctx):
-#             mid = path_segment(
-#                 self.angle,
-#                 lax.select(self.length > 0, d, -d),
-#             ).move(start)
-#             ctx += mid.plot(style)
-#             return d + 0.1, ctx
+    __repr__ = pformat_repr
 
-#         _, ctx = lax.while_loop(
-#             init_val=(jnp.array(0.0), ctx),
-#             cond_fun=lambda p: p[0] < jnp.abs(self.length),
-#             body_fun=lambda p: plot_one(p[0], p[1]),
-#         )
-#         _, ctx = plot_one(jnp.abs(self.length), ctx)
-#         return ctx
+    @plotmethod
+    def plot(self, ctx: plot_ctx, start: position, style: plot_style = plot_style()):
+        def plot_one(d: fval, ctx: plot_ctx):
+            mid = path_segment(
+                self.angle,
+                lax.select(self.length > 0, d, -d),
+            ).move(start)
+            ctx += mid.plot_as_point(style)
+            return d + 0.1, ctx
 
-
-T = TypeVar("T")
+        _, ctx = lax.while_loop(
+            init_val=(jnp.array(0.0), ctx),
+            cond_fun=lambda p: p[0] < jnp.abs(self.length),
+            body_fun=lambda p: plot_one(p[0], p[1]),
+        )
+        _, ctx = plot_one(jnp.abs(self.length), ctx)
+        return ctx
 
 
-# class path(eqx.Module):
-#     parts: batched[path_segment]
+class path(eqx.Module):
+    parts: batched[path_segment]
 
-#     @jaxtyped(typechecker=typechecker)
-#     def move(self, p: position | None = None) -> tuple[position, batched[position]]:
-#         if p is None:
-#             p = position.zero()
+    @jit
+    def move(self, p: position | None = None) -> tuple[position, batched[position]]:
+        if p is None:
+            p = position.zero()
 
-#         final_pos, pos_intermediats = self.parts.scan(
-#             lambda p, s: (s.move(p), p), init=p
-#         )
-#         return final_pos, pos_intermediats
+        final_pos, pos_intermediats = self.parts.scan(
+            lambda p, s: (s.move(p), p), init=p
+        )
+        return final_pos, pos_intermediats
 
-#     def clip(self) -> "path":
-#         return path(self.parts.map(lambda x: x.clip()))
+    def clip(self) -> path:
+        return path(self.parts.map(lambda x: x.clip()))
 
-#     def __getitem__(self, idx: int) -> path_segment:
-#         return self.parts[idx].unwrap()
+    def __getitem__(self, idx: int) -> path_segment:
+        return self.parts[idx].unwrap()
 
-#     def __len__(self):
-#         return len(self.parts)
+    def __len__(self):
+        return len(self.parts)
 
-#     def __iter__(self):
-#         return (self[i] for i in range(len(self)))
+    def __iter__(self):
+        return (self[i] for i in range(len(self)))
 
-#     @staticmethod
-#     def from_parts(*segs: path_segment) -> "path":
-#         return path(batched.stack([batched.create(s) for s in segs]))
+    @staticmethod
+    def from_parts(*segs: path_segment) -> path:
+        return path(batched.create_stack(segs))
 
-#     __repr__ = pformat_repr
+    __repr__ = pformat_repr
 
-#     def plot(
-#         self, start: position | None = None, style: plot_style = plot_style()
-#     ) -> plotable:
-#         _, seg_starts = self.move(start)
-#         return batched_vmap(lambda p, s: p.plot(s, style), self.parts, seg_starts)
+    def plot(
+        self, start: position | None = None, style: plot_style = plot_style()
+    ) -> plotable:
+        _, seg_starts = self.move(start)
+        return batched_vmap(lambda p, s: p.plot(s, style), self.parts, seg_starts)
